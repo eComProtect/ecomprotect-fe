@@ -29,6 +29,8 @@ import { AdminProtectedRoute } from "./layout/adminprotectroute";
 import WideNetworkReport from "./pages/widenetworkreport.page";
 import OnboardingReport from "./pages/onboardingreport.page";
 import SystemEffectivenessReport from "./pages/effectivenesreport.page";
+import { ShopifyInstall } from "./pages/ShopifyInstall";
+import ShopifyCallback from "./pages/ShopifyCallback";
 
 export const Router = () => {
   return (
@@ -47,6 +49,8 @@ export const Router = () => {
         <Route path="/post-signup" element={<PostSignupFlowPage />} />
         <Route path="/under-review" element={<UnderReviewComponent />} />
         <Route path="/accept-invite" element={<AcceptInvitation />} />
+        <Route path="/install" element={<ShopifyInstall />} />
+        <Route path="/auth/callback" element={<ShopifyCallback />} />
 
         {/* Protected Routes with Sidebar Layout */}
         <Route

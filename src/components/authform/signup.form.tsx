@@ -41,8 +41,6 @@ const formSchema = z
     shopifyUrl: z.string().trim().url("Please enter a valid store URL."),
     password: z.string().min(8, "Password must be at least 8 characters."),
     confirmPassword: z.string(),
-    shopifyApiKey: z.string().min(1, "Please enter a valid API key."),
-    shopifyAccessToken: z.string().min(1, "Please enter a valid access token."),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match.",
@@ -86,8 +84,6 @@ export const SignupForm = () => {
         company_registration_number: String(valRegNum),
         average_orders_per_month: values.averageOrdersPerMonth,
         shopify_url: shopifyUrl,
-        shopify_api_key: values.shopifyApiKey,
-        shopify_access_token: values.shopifyAccessToken,
         role: "admin",
         package: "free",
         plan: "free",
@@ -304,43 +300,6 @@ export const SignupForm = () => {
                     <FormControl>
                       <Input
                         placeholder="https://www.yourstore.com"
-                        {...field}
-                        className="border-gray-200 bg-gray-50 py-5"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </Box>
-
-            <Box className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="shopifyApiKey"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Shopify API Key</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="api key"
-                        {...field}
-                        className="border-gray-200 bg-gray-50 py-5"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="shopifyAccessToken"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Shopify Access Token</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="access token"
                         {...field}
                         className="border-gray-200 bg-gray-50 py-5"
                       />
