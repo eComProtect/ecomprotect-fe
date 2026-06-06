@@ -6,9 +6,10 @@ const ShopifyCallback = () => {
     const token = params.get("token");
 
     if (token) {
-      // Set the session token cookie manually so better-auth picks it up
-      document.cookie = `better-auth.session_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-      // Redirect to dashboard
+      // Set for frontend domain
+      document.cookie = `better-auth.session_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=None; Secure`;
+      // Set for root domain to cover all subdomains
+      document.cookie = `better-auth.session_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=None; Secure; domain=.ecomprotect.co.uk`;
       window.location.href = "/user/customer-management";
     }
   }, []);
