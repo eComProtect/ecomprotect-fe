@@ -1,7 +1,6 @@
 import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import { Signup } from "./pages/signup.page";
 import { Signin } from "./pages/signin.page";
-import { Home } from "./pages/home.page";
 import { Settings } from "./pages/settings.page";
 import { NotFoundPage } from "./pages/notfound.page";
 import { AdminSignin } from "./pages/adminsignin.page";
@@ -31,6 +30,7 @@ import OnboardingReport from "./pages/onboardingreport.page";
 import SystemEffectivenessReport from "./pages/effectivenesreport.page";
 import { ShopifyInstall } from "./pages/ShopifyInstall";
 import ShopifyCallback from "./pages/ShopifyCallback";
+import EmbeddedEntry from "./pages/embeddedentry.page";
 
 export const Router = () => {
   return (
@@ -44,7 +44,8 @@ export const Router = () => {
         <Route path="/verify-email" element={<VerifyEmailPage />} />
 
         <Route path="/signup" element={<Signup />} />
-        <Route path="/" element={<Home />} />
+        {/* Root: embedded entry gate (Shopify Admin) or public marketing site */}
+        <Route path="/" element={<EmbeddedEntry />} />
         <Route path="/select-plans" element={<PlansPage />} />
         <Route path="/post-signup" element={<PostSignupFlowPage />} />
         <Route path="/under-review" element={<UnderReviewComponent />} />

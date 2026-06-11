@@ -1,4 +1,5 @@
 import ax, { AxiosError } from "axios";
+import { fetchSessionToken, isEmbedded } from "./appbridge.config";
 
 export const envirnoment = import.meta.env.VITE_NODE_ENV;
 export type ErrorWithMessage = AxiosError<WithMessage>;
@@ -23,4 +24,18 @@ export const url = `${backendOrigin}/api`;
 export const axios = ax.create({
   baseURL: url,
   withCredentials: true,
+});
+
+// When running embedded in Shopify Admin, third-party cookies are unreliable inside
+// the iframe, so we authenticate with a fresh App Bridge session token (JWT) on every
+// request. The backend verifies it via shopify.session.decodeSessionToken (see
+// auth.middleware.ts). Outside the iframe we fall back to the existing cookie session.
+axios.interceptors.request.use(async (config) => {
+  if (isEmbedded) {
+    const token = await fetchSessionToken();
+    if (token) {
+      config.headers.set("Authorization", `Bearer ${token}`);
+    }
+  }
+  return config;
 });
