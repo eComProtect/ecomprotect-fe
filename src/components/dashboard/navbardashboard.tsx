@@ -4,7 +4,7 @@ import { Input } from "../ui/input";
 import { Box } from "../ui/box";
 import icon from "/icons/logo_icon.png";
 import waveIcon from "/icons/wave_icon.svg";
-import { authClient } from "../../providers/user.provider";
+import { useIdentity } from "@/hooks/useidentity";
 import { useNotificationContext } from "@/providers/notification.provider";
 import {
   Link,
@@ -37,7 +37,7 @@ const SEARCH_TYPES = [
 ];
 
 export const NavbarDashboard = ({ userType }: NavbarDashboardProps) => {
-  const { data: session } = authClient.useSession();
+  const { user } = useIdentity();
   const { unreadCount } = useNotificationContext();
   const location = useLocation();
   const navigate = useNavigate();
@@ -98,7 +98,7 @@ export const NavbarDashboard = ({ userType }: NavbarDashboardProps) => {
           <h1 className="text-lg font-semibold">{welcomeMessage}</h1>
           <img src={waveIcon} alt="wave-icon" className="w-6 h-6" />
         </Box>
-        <p className="text-xs text-muted-foreground">{session?.user.email}</p>
+        <p className="text-xs text-muted-foreground">{user?.email}</p>
       </div>
 
       {allowedPaths.includes(location.pathname) && (
@@ -173,7 +173,7 @@ export const NavbarDashboard = ({ userType }: NavbarDashboardProps) => {
         >
           <div className="w-full h-full rounded-full overflow-hidden border-2 border-white">
             <img
-                src={session?.user.image || icon}
+                src={user?.image || icon}
                 alt="Profile"
                 className="w-full h-full object-cover"
             />
