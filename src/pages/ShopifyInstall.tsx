@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Redirect } from "@shopify/app-bridge/actions";
+import { getAppBridge, isEmbedded } from "@/configs/appbridge.config";
 
 const ShopifyLoadingState = ({ text }: { text: string }) => (
   <main className="flex min-h-screen items-center justify-center bg-white px-6">
@@ -22,9 +24,18 @@ export const ShopifyInstall = () => {
     }
 
     const apiUrl = import.meta.env.VITE_API_URL;
-    window.location.href = `${apiUrl}/shopify/install?shop=${encodeURIComponent(
-      shop
-    )}`;
+    const installUrl = `${apiUrl}/shopify/install?shop=${encodeURIComponent(shop)}`;
+
+    const app = getAppBridge();
+    if (isEmbedded && app) {
+      // Inside the Admin iframe, a plain redirect only navigates the iframe, so the
+      // OAuth state cookie would be set in a blocked third-party context. Use App
+      // Bridge REMOTE redirect to drive the TOP-LEVEL window to the install URL, so
+      // OAuth runs first-party and the cookie survives through to /shopify/callback.
+      Redirect.create(app).dispatch(Redirect.Action.REMOTE, installUrl);
+    } else {
+      window.location.href = installUrl;
+    }
   }, []);
 
   if (error) {
