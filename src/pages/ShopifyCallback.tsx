@@ -2,16 +2,16 @@ import { useEffect } from "react";
 
 const ShopifyCallback = () => {
   useEffect(() => {
+    // No more token-in-URL / cookie handling. The backend OAuth callback now
+    // redirects straight to `/?shop=...&host=...`; if anything still lands here,
+    // forward those params on to the embedded entry point so App Bridge can boot.
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-
-    if (token) {
-      // Set for frontend domain
-      document.cookie = `better-auth.session_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=None; Secure`;
-      // Set for root domain to cover all subdomains
-      document.cookie = `better-auth.session_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=None; Secure; domain=.ecomprotect.co.uk`;
-      window.location.href = "/user/customer-management";
-    }
+    const shop = params.get("shop") ?? "";
+    const host = params.get("host") ?? "";
+    const next = new URLSearchParams();
+    if (shop) next.set("shop", shop);
+    if (host) next.set("host", host);
+    window.location.replace(`/?${next.toString()}`);
   }, []);
 
   return (
