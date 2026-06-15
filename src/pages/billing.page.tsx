@@ -4,10 +4,19 @@ import { ShieldCheck, Loader2 } from "lucide-react";
 import { Redirect } from "@shopify/app-bridge/actions";
 import { axios } from "@/configs/axios.config";
 import { getAppBridge, isEmbedded, host } from "@/configs/appbridge.config";
+import { useIdentity } from "@/hooks/useidentity";
 import { Box } from "@/components/ui/box";
 import { Flex } from "@/components/ui/flex";
 import { Button } from "@/components/ui/button";
 import logo from "/images/logo.png";
+
+// Values must match the backend pricing matrix keys (billing.util.ts).
+const ORDER_TIERS: { value: string; label: string }[] = [
+  { value: "0-300", label: "0 – 300" },
+  { value: "301-2,000", label: "301 – 2,000" },
+  { value: "2,001-5,000", label: "2,001 – 5,000" },
+  { value: "5000+", label: "5,000+" },
+];
 
 interface MerchantPlan {
   name: string;
@@ -25,20 +34,38 @@ interface MerchantPlan {
  * confirmation screen (App Bridge REMOTE — same iframe-breakout used for OAuth).
  */
 const BillingPage = () => {
+  const { user } = useIdentity();
+  const [orders, setOrders] = useState<string>("0-300");
   const [selected, setSelected] = useState<MerchantPlan | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Default the order range to whatever is already stored for this merchant.
+  useEffect(() => {
+    const stored = user?.average_orders_per_month;
+    if (stored && ORDER_TIERS.some((t) => t.value === stored)) {
+      setOrders(stored);
+    }
+  }, [user]);
+
   const { data: plans, isLoading } = useQuery<MerchantPlan[]>({
-    queryKey: ["billing", "plans"],
-    queryFn: async () => (await axios.get("/billing/plans")).data?.data ?? [],
+    queryKey: ["billing", "plans", orders],
+    queryFn: async () =>
+      (await axios.get(`/billing/plans?orders=${encodeURIComponent(orders)}`))
+        .data?.data ?? [],
   });
 
+  // Keep the selected plan's price in sync when the order range changes.
   useEffect(() => {
-    if (plans && !selected) {
-      setSelected(plans.find((p) => p.available) ?? plans[0] ?? null);
-    }
-  }, [plans, selected]);
+    if (!plans) return;
+    setSelected(
+      (prev) =>
+        plans.find((p) => p.name === prev?.name) ??
+        plans.find((p) => p.available) ??
+        plans[0] ??
+        null
+    );
+  }, [plans]);
 
   const formatPrice = (p: MerchantPlan) => {
     const symbol = p.currency === "GBP" ? "£" : p.currency === "EUR" ? "€" : "$";
@@ -52,6 +79,7 @@ const BillingPage = () => {
     try {
       const res = await axios.post("/billing/subscribe", {
         package: selected.name,
+        orders,
         host,
       });
       const confirmationUrl: string | undefined = res.data?.confirmationUrl;
@@ -92,6 +120,30 @@ const BillingPage = () => {
         </h1>
         <p className="mt-2 text-gray-600">
           Choose a plan to activate eComProtect for your store.
+        </p>
+      </Box>
+
+      <Box className="mx-auto mb-8 w-full max-w-xs">
+        <label
+          htmlFor="orders"
+          className="mb-1 block text-sm font-medium text-gray-700"
+        >
+          Average orders per month
+        </label>
+        <select
+          id="orders"
+          value={orders}
+          onChange={(e) => setOrders(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+        >
+          {ORDER_TIERS.map((tier) => (
+            <option key={tier.value} value={tier.value}>
+              {tier.label}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-gray-500">
+          Pricing updates based on the orders you want to manage.
         </p>
       </Box>
 
