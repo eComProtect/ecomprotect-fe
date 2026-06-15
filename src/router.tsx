@@ -31,6 +31,7 @@ import SystemEffectivenessReport from "./pages/effectivenesreport.page";
 import { ShopifyInstall } from "./pages/ShopifyInstall";
 import ShopifyCallback from "./pages/ShopifyCallback";
 import EmbeddedEntry from "./pages/embeddedentry.page";
+import BillingPage from "./pages/billing.page";
 
 export const Router = () => {
   return (
@@ -52,6 +53,14 @@ export const Router = () => {
         <Route path="/accept-invite" element={<AcceptInvitation />} />
         <Route path="/install" element={<ShopifyInstall />} />
         <Route path="/auth/callback" element={<ShopifyCallback />} />
+        <Route
+          path="/billing"
+          element={
+            <ProtectedRoute>
+              <BillingPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Protected Routes with Sidebar Layout */}
         <Route

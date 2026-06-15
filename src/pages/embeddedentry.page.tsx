@@ -23,7 +23,7 @@ const EmbeddedEntry = () => {
   const host = params.get("host");
   const embedded = Boolean(shop && host);
 
-  const [ready, setReady] = useState(!embedded);
+  const [destination, setDestination] = useState<string | null>(null);
 
   useEffect(() => {
     if (!embedded) return;
@@ -31,9 +31,19 @@ const EmbeddedEntry = () => {
 
     (async () => {
       try {
-        // Cheap authenticated probe — returns 200 (possibly empty) when the shop is known.
-        await axios.get("/notifications/get-notifications");
-        if (!cancelled) setReady(true);
+        // 1) Is the shop installed? (token-authenticated probe → 401 if not)
+        await axios.get("/user/me");
+
+        // 2) Does it have an active app subscription? Gate the dashboard on it.
+        try {
+          const { active } = (await axios.get("/billing/status")).data;
+          if (!cancelled) {
+            setDestination(active ? "/user/customer-management" : "/billing");
+          }
+        } catch {
+          // Billing status unavailable — don't hard-block; let them into the app.
+          if (!cancelled) setDestination("/user/customer-management");
+        }
       } catch (err) {
         const statusCode = (err as { response?: { status?: number } })?.response
           ?.status;
@@ -42,7 +52,7 @@ const EmbeddedEntry = () => {
           window.location.replace(`/install?shop=${encodeURIComponent(shop!)}`);
         } else if (!cancelled) {
           // Transient error — show the app and let normal data hooks retry.
-          setReady(true);
+          setDestination("/user/customer-management");
         }
       }
     })();
@@ -53,8 +63,8 @@ const EmbeddedEntry = () => {
   }, [embedded, shop]);
 
   if (!embedded) return <Home />;
-  if (!ready) return null;
-  return <Navigate to="/user/customer-management" replace />;
+  if (!destination) return null;
+  return <Navigate to={destination} replace />;
 };
 
 export default EmbeddedEntry;
