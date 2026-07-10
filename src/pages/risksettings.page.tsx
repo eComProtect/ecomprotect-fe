@@ -82,6 +82,8 @@ function RiskSettings() {
   useEffect(() => {
     if (fetchedData) {
       const f = fetchedData;
+      setThresholdInput((f.lostParcelThreshold ?? 3).toString());
+      setLossRateInput((f.lossRateThreshold ?? 40).toString());
       setSettings((prev) => ({
         ...prev,
         lostParcelThreshold: f.lostParcelThreshold ?? 3,
@@ -179,7 +181,7 @@ function RiskSettings() {
                 // type="number"
                 // min={1}
                 // max={10}
-                value={settings.lostParcelThreshold || thresholdInput}
+                value={thresholdInput}
                 className="mt-2 bg-white border border-gray-200  py-5"
                 onChange={(e) => setThresholdInput(e.target.value)}
                 onBlur={handleThresholdBlur}
@@ -218,7 +220,7 @@ function RiskSettings() {
             </Label>
             <Input
               type="number"
-              value={settings.lossRateThreshold}
+              value={lossRateInput}
               min={1}
               max={100}
               disabled={
@@ -231,6 +233,9 @@ function RiskSettings() {
               }}
               onBlur={handleLossRateBlur}
             />
+            {lossRateError && (
+              <p className="mt-1 text-sm text-red-600">{lossRateError}</p>
+            )}
           </Box>
 
           <Box>
