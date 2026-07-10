@@ -32,6 +32,7 @@ import { ShopifyInstall } from "./pages/ShopifyInstall";
 import ShopifyCallback from "./pages/ShopifyCallback";
 import EmbeddedEntry from "./pages/embeddedentry.page";
 import BillingPage from "./pages/billing.page";
+import CompleteProfilePage from "./pages/completeprofile.page";
 
 export const Router = () => {
   return (
@@ -58,6 +59,14 @@ export const Router = () => {
           element={
             <ProtectedRoute>
               <BillingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/complete-profile"
+          element={
+            <ProtectedRoute>
+              <CompleteProfilePage />
             </ProtectedRoute>
           }
         />

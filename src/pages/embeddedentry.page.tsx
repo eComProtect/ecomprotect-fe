@@ -41,8 +41,10 @@ const EmbeddedEntry = () => {
 
         switch (status) {
           case "needs_signup":
-            // No store row exists for this shop yet — OAuth install creates it.
-            window.location.replace(`/install?shop=${encodeURIComponent(shop)}`);
+            // The store row already exists (OAuth install creates it with real
+            // Shopify credentials) — it just needs the human profile details
+            // filled in before moving on to billing.
+            setDestination("/complete-profile");
             return;
           case "needs_billing":
             setDestination("/billing");
