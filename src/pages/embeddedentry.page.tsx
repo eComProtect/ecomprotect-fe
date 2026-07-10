@@ -26,8 +26,17 @@ const EmbeddedEntry = () => {
   const [destination, setDestination] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!embedded || !shop) return;
+    if (!embedded || !shop || !host) return;
     let cancelled = false;
+
+    // Every in-app destination must keep shop/host in its own URL: App Bridge
+    // (appbridge.config.ts) re-reads them from window.location on a fresh
+    // page load, and react-router's client-side navigation doesn't carry
+    // query strings across to a bare path. Without this, a merchant
+    // refreshing the browser on /billing or /complete-profile would lose
+    // embedded context entirely.
+    const withShopHost = (path: string) =>
+      `${path}?shop=${encodeURIComponent(shop)}&host=${encodeURIComponent(host)}`;
 
     (async () => {
       try {
@@ -44,10 +53,10 @@ const EmbeddedEntry = () => {
             // The store row already exists (OAuth install creates it with real
             // Shopify credentials) — it just needs the human profile details
             // filled in before moving on to billing.
-            setDestination("/complete-profile");
+            setDestination(withShopHost("/complete-profile"));
             return;
           case "needs_billing":
-            setDestination("/billing");
+            setDestination(withShopHost("/billing"));
             return;
           case "needs_login":
             // There's no separate "log back in" step inside the iframe — an
@@ -57,21 +66,21 @@ const EmbeddedEntry = () => {
             window.location.replace(`/install?shop=${encodeURIComponent(shop)}`);
             return;
           case "ready":
-            setDestination("/user/customer-management");
+            setDestination(withShopHost("/user/customer-management"));
             return;
         }
       } catch {
         // Status check itself failed (network/backend issue) — don't strand
         // the merchant on a blank screen; let them into the app and let
         // normal data hooks/guards handle it from there.
-        if (!cancelled) setDestination("/user/customer-management");
+        if (!cancelled) setDestination(withShopHost("/user/customer-management"));
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [embedded, shop]);
+  }, [embedded, shop, host]);
 
   if (!embedded) return <Home />;
   if (!destination) return null;

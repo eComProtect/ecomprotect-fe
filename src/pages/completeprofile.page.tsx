@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { axios } from "@/configs/axios.config";
+import { shop, host } from "@/configs/appbridge.config";
 import { Box } from "@/components/ui/box";
 import { Flex } from "@/components/ui/flex";
 import { Button } from "@/components/ui/button";
@@ -52,8 +53,14 @@ const CompleteProfilePage = () => {
     try {
       await axios.post("/onboarding/signup", form);
       // Re-run the root gate: onboardingStatus is now "signed_up", so it
-      // routes to billing next.
-      navigate("/", { replace: true });
+      // routes to billing next. Must rebuild shop/host explicitly —
+      // EmbeddedEntry decides "am I embedded?" from the URL's query string,
+      // and by this point react-router's own in-app navigation (EmbeddedEntry
+      // -> here) has already stripped it from window.location. shop/host
+      // from appbridge.config are captured once at true page load, so they're
+      // still correct regardless of what the URL bar currently shows.
+      const params = new URLSearchParams({ shop, host });
+      navigate(`/?${params.toString()}`, { replace: true });
     } catch (e: any) {
       setError(
         e?.response?.data?.message || e?.message || "Failed to save your details."
