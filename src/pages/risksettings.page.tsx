@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useCreateSettings } from "@/hooks/settings/usecreatesettings";
 import { Flex } from "@/components/ui/flex";
-import { authClient } from "@/providers/user.provider";
+import { useIdentity } from "@/hooks/useidentity";
 import { cn } from "@/lib/utils";
 import { useFetchSettings } from "@/hooks/settings/usefetchsettings";
 import { wordsToNumber } from "@/lib/wordtonumber";
@@ -76,8 +76,8 @@ function RiskSettings() {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
-  const { data } = authClient.useSession();
-  const userPackage = data?.user.package;
+  const { user } = useIdentity();
+  const userPackage = user?.package;
 
   useEffect(() => {
     if (fetchedData) {
