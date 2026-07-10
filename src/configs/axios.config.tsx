@@ -1,5 +1,6 @@
 import ax, { AxiosError } from "axios";
-import { fetchSessionToken, isEmbedded } from "./appbridge.config";
+import { Redirect } from "@shopify/app-bridge/actions";
+import { fetchSessionToken, getAppBridge, isEmbedded } from "./appbridge.config";
 
 export const envirnoment = import.meta.env.VITE_NODE_ENV;
 export type ErrorWithMessage = AxiosError<WithMessage>;
@@ -39,3 +40,35 @@ axios.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+// Offline Shopify tokens have no refresh flow once expired — the backend
+// returns { error: "SHOPIFY_TOKEN_EXPIRED", reAuthUrl } (401) when a token
+// can't be silently renewed, and nothing was previously acting on that
+// response: requests just failed and data quietly disappeared with no
+// explanation or way to recover. Redirect straight to reAuthUrl (re-running
+// OAuth), the same as EmbeddedEntry's own needs_login recovery path.
+let reAuthRedirectInFlight = false;
+
+axios.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<{ error?: string; reAuthUrl?: string }>) => {
+    const data = error.response?.data;
+
+    if (
+      error.response?.status === 401 &&
+      data?.error === "SHOPIFY_TOKEN_EXPIRED" &&
+      data.reAuthUrl &&
+      !reAuthRedirectInFlight
+    ) {
+      reAuthRedirectInFlight = true;
+      const app = getAppBridge();
+      if (isEmbedded && app) {
+        Redirect.create(app).dispatch(Redirect.Action.REMOTE, data.reAuthUrl);
+      } else {
+        window.location.href = data.reAuthUrl;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
