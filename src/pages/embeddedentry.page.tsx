@@ -3,19 +3,19 @@ import { Navigate } from "react-router-dom";
 import { axios } from "@/configs/axios.config";
 import { Home } from "./home.page";
 
+type OnboardingStage = "needs_signup" | "needs_billing" | "needs_login" | "ready";
+
 /**
  * Root route ("/") entry point.
  *
  * Shopify Admin loads embedded apps at `/?shop=...&host=...&embedded=1`.
- *  - Not embedded (no shop/host)  → render the public marketing site (Home).
- *  - Embedded + app is installed  → send the merchant to the dashboard.
- *  - Embedded + not installed yet → kick off OAuth via /install (which redirects to
- *    the backend /shopify/install).
- *
- * "Installed?" can't be read from a cookie inside the iframe (third-party cookies are
- * blocked), so we probe a token-authenticated endpoint. The axios interceptor attaches
- * the App Bridge session token; the backend resolves the shop from it. A 401 means the
- * shop has no stored offline token yet → (re)install.
+ *  - Not embedded (no shop/host) → render the public marketing site (Home).
+ *  - Embedded                    → ask the backend for this shop's onboarding stage
+ *    (GET /api/onboarding/status?shop=...) and route accordingly. The axios
+ *    interceptor already attaches the App Bridge session token to this request,
+ *    so the backend resolves both "does a store exist for this shop" and "is
+ *    there a valid session for it" in one call — no separate /user/me probe
+ *    needed.
  */
 const EmbeddedEntry = () => {
   const params = new URLSearchParams(window.location.search);
@@ -26,34 +26,43 @@ const EmbeddedEntry = () => {
   const [destination, setDestination] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!embedded) return;
+    if (!embedded || !shop) return;
     let cancelled = false;
 
     (async () => {
       try {
-        // 1) Is the shop installed? (token-authenticated probe → 401 if not)
-        await axios.get("/user/me");
+        const { status } = (
+          await axios.get<{ status: OnboardingStage }>("/onboarding/status", {
+            params: { shop },
+          })
+        ).data;
 
-        // 2) Does it have an active app subscription? Gate the dashboard on it.
-        try {
-          const { active } = (await axios.get("/billing/status")).data;
-          if (!cancelled) {
-            setDestination(active ? "/user/customer-management" : "/billing");
-          }
-        } catch {
-          // Billing status unavailable — don't hard-block; let them into the app.
-          if (!cancelled) setDestination("/user/customer-management");
+        if (cancelled) return;
+
+        switch (status) {
+          case "needs_signup":
+            // No store row exists for this shop yet — OAuth install creates it.
+            window.location.replace(`/install?shop=${encodeURIComponent(shop)}`);
+            return;
+          case "needs_billing":
+            setDestination("/billing");
+            return;
+          case "needs_login":
+            // There's no separate "log back in" step inside the iframe — an
+            // embedded merchant's identity IS the App Bridge session token.
+            // Re-running OAuth re-establishes a valid stored token the same
+            // way a fresh install does.
+            window.location.replace(`/install?shop=${encodeURIComponent(shop)}`);
+            return;
+          case "ready":
+            setDestination("/user/customer-management");
+            return;
         }
-      } catch (err) {
-        const statusCode = (err as { response?: { status?: number } })?.response
-          ?.status;
-        if (statusCode === 401) {
-          // Shop not installed / token revoked → begin OAuth.
-          window.location.replace(`/install?shop=${encodeURIComponent(shop!)}`);
-        } else if (!cancelled) {
-          // Transient error — show the app and let normal data hooks retry.
-          setDestination("/user/customer-management");
-        }
+      } catch {
+        // Status check itself failed (network/backend issue) — don't strand
+        // the merchant on a blank screen; let them into the app and let
+        // normal data hooks/guards handle it from there.
+        if (!cancelled) setDestination("/user/customer-management");
       }
     })();
 
