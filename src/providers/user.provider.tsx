@@ -46,6 +46,7 @@ export const authClient = createAuthClient({
         role: { type: "string" },
         plan: { type: "string" },
         package: { type: "string" },
+        storeOwnerId: { type: "string", required: false },
       },
     }),
     phoneNumberClient(),
