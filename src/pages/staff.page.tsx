@@ -115,7 +115,6 @@ function EditStaffDialog({
               <SelectContent className="bg-white border-slate-200 shadow-xl rounded-lg">
                 <SelectItem value="manager">Manager</SelectItem>
                 <SelectItem value="support">Support</SelectItem>
-                <SelectItem value="subadmin">Sub-Admin</SelectItem>
                 <SelectItem value="marketing">Marketing</SelectItem>
               </SelectContent>
             </Select>
@@ -469,7 +468,6 @@ export default function CreateStaff() {
                         <SelectContent className="bg-white border-slate-200 shadow-xl rounded-lg">
                             <SelectItem value="manager" className="cursor-pointer">Manager</SelectItem>
                             <SelectItem value="support" className="cursor-pointer">Support</SelectItem>
-                            <SelectItem value="subadmin" className="cursor-pointer">Sub-Admin</SelectItem>
                             <SelectItem value="marketing" className="cursor-pointer">Marketing</SelectItem>
                         </SelectContent>
                     </Select>
