@@ -13,9 +13,9 @@ import {
   type ReportData,
 } from "../components/common/reportsummarymodal";
 import { Dialog, DialogTrigger } from "../components/ui/dialog";
-import { useFetchNotification } from "@/hooks/notifications/usegetnotification";
-import { usePushNotification } from "@/hooks/notifications/usePushNotification";
+import { useFetchPushSubscriptionStatus } from "@/hooks/notifications/usefetchpushsubscriptionstatus";
 import { useNotificationContext } from "@/providers/notification.provider";
+import { shop } from "@/configs/appbridge.config";
 import { Bell } from "lucide-react";
 
 type RiskLevelText = "High" | "Medium" | "Low";
@@ -152,24 +152,18 @@ const NotificationItem = ({
 };
 
 function NotificationsPage() {
-  const { data, isLoading, isError } = useFetchNotification();
-  const {
-    permission,
-    subscribe,
-    isSubscribing,
-    error: pushError,
-    isSupported,
-  } = usePushNotification();
+  // Backed by NotificationProvider, which stays live-updated via the
+  // socket — using it here (instead of a separate fetch) is what makes new
+  // notifications appear on this page without a reload.
+  const { notifications: raw, isLoading, isError } = useNotificationContext();
+  const { data: pushStatus } = useFetchPushSubscriptionStatus(!!shop);
 
-  console.log("permission", permission);
   if (isLoading) {
     return <Box>Loading...</Box>;
   }
   if (isError) {
     return <Box>Error loading notifications.</Box>;
   }
-
-  const raw: NotificationBackend[] = data ?? [];
 
   const notifications: NotificationUI[] = raw.map((n) => {
     const meta = n.meta || {};
@@ -214,23 +208,21 @@ function NotificationsPage() {
       <header className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold text-web-dark-grey">Notifications</h1>
         <div className="flex items-center gap-2">
-          {isSupported && permission !== "granted" && (
+          {!pushStatus?.subscribed && (
             <Button
               variant="outline"
               className="text-slate-700 bg-white border-slate-300 hover:bg-slate-100"
-              onClick={() => subscribe()}
-              disabled={isSubscribing || permission === "denied"}
+              onClick={() =>
+                window.open(
+                  `/enable-notifications?shop=${encodeURIComponent(shop)}`,
+                  "_blank"
+                )
+              }
             >
-              {isSubscribing ? (
-                "Enabling…"
-              ) : (
-                <>
-                  <Bell className="mr-2 h-4 w-4" /> Enable push notifications
-                </>
-              )}
+              <Bell className="mr-2 h-4 w-4" /> Enable push notifications
             </Button>
           )}
-          {isSupported && permission === "granted" && (
+          {pushStatus?.subscribed && (
             <span className="flex items-center gap-1.5 text-sm text-green-600">
               <Bell className="h-4 w-4" /> Push enabled
             </span>
@@ -243,11 +235,6 @@ function NotificationsPage() {
           </Button>
         </div>
       </header>
-      {pushError && (
-        <p className="mb-4 text-sm text-red-600" role="alert">
-          {pushError}
-        </p>
-      )}
       <main>
         {notifications.length === 0 ? (
           <Box className="flex items-center justify-center h-[60vh] text-slate-500 text-lg font-medium">

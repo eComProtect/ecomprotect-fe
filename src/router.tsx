@@ -33,6 +33,7 @@ import ShopifyCallback from "./pages/ShopifyCallback";
 import EmbeddedEntry from "./pages/embeddedentry.page";
 import BillingPage from "./pages/billing.page";
 import CompleteProfilePage from "./pages/completeprofile.page";
+import EnableNotificationsPage from "./pages/enablenotifications.page";
 
 export const Router = () => {
   return (
@@ -53,6 +54,7 @@ export const Router = () => {
         <Route path="/under-review" element={<UnderReviewComponent />} />
         <Route path="/accept-invite" element={<AcceptInvitation />} />
         <Route path="/install" element={<ShopifyInstall />} />
+        <Route path="/enable-notifications" element={<EnableNotificationsPage />} />
         <Route path="/auth/callback" element={<ShopifyCallback />} />
         <Route
           path="/billing"

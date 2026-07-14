@@ -26,7 +26,7 @@ export function usePushNotification() {
     checkPermission();
   }, [checkPermission]);
 
-  const subscribe = useCallback(async (): Promise<boolean> => {
+  const subscribe = useCallback(async (shop?: string): Promise<boolean> => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
       setPermission("unsupported");
       setError("Push notifications are not supported in this browser.");
@@ -102,6 +102,10 @@ export function usePushNotification() {
           p256dh: subJson.keys.p256dh,
           auth: subJson.keys.auth,
         },
+        // Only meaningful (and needed) from the standalone /enable-notifications
+        // tab, which has no session of its own — the dashboard's own call
+        // already has one, so this is just ignored there.
+        ...(shop ? { shop } : {}),
       });
 
       if (response.status !== 201 && response.status !== 200) {
