@@ -9,6 +9,8 @@ import { useFetchNotification } from "@/hooks/notifications/usegetnotification";
 import { useMarkNotificationAsRead } from "@/hooks/notifications/usemarkread";
 import { useIdentity } from "@/hooks/useidentity";
 import { getNotificationSocket } from "@/configs/socket.config";
+import { isEmbedded } from "@/configs/appbridge.config";
+import { EmbeddedChrome } from "@/components/appbridge/embeddedchrome";
 
 interface NotificationBackend {
   id: string;
@@ -40,6 +42,8 @@ const NotificationContext = createContext<NotificationContextType | undefined>(
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { data, isLoading, isError } = useFetchNotification();
   const [notifications, setNotifications] = useState<NotificationBackend[]>([]);
+  const [latestLiveNotification, setLatestLiveNotification] =
+    useState<NotificationBackend | null>(null);
   const { mutate } = useMarkNotificationAsRead();
   const { isAuthenticated } = useIdentity();
 
@@ -61,6 +65,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
     const handleNewNotification = (notification: NotificationBackend) => {
       setNotifications((prev) => [notification, ...prev]);
+      setLatestLiveNotification(notification);
     };
 
     socket.on("new_notification", handleNewNotification);
@@ -83,6 +88,14 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     <NotificationContext.Provider
       value={{ notifications, unreadCount, isLoading, isError, markAsSeen, reload }}
     >
+      {/* Only mountable inside <AppBridgeProvider> (see main.tsx) — useToast/
+          TitleBar both throw without it, so this must stay conditional. */}
+      {isEmbedded && (
+        <EmbeddedChrome
+          latestNotification={latestLiveNotification}
+          unreadCount={unreadCount}
+        />
+      )}
       {children}
     </NotificationContext.Provider>
   );

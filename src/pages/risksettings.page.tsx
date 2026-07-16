@@ -34,6 +34,7 @@ type SettingsState = {
 
   emailNotificationsEnabled: boolean;
   notificationEmail: string;
+  emailAlertMinOrderValue: number;
   includeOrderDetails: boolean;
   includeReasonForFlag: boolean;
   includeRecommendedAction: boolean;
@@ -55,6 +56,7 @@ function RiskSettings() {
 
     emailNotificationsEnabled: true,
     notificationEmail: "info@example.com",
+    emailAlertMinOrderValue: 0,
     includeOrderDetails: true,
     includeReasonForFlag: true,
     includeRecommendedAction: true,
@@ -100,6 +102,8 @@ function RiskSettings() {
 
         emailNotificationsEnabled: f.emailNotificationsEnabled ?? true,
         notificationEmail: f.notificationEmail ?? "info@example.com",
+        // numeric columns come back as strings from the backend.
+        emailAlertMinOrderValue: Number(f.emailAlertMinOrderValue ?? 0),
         includeOrderDetails: f.includeOrderDetails ?? true,
         includeReasonForFlag: f.includeReasonForFlag ?? true,
         includeRecommendedAction: f.includeRecommendedAction ?? true,
@@ -123,6 +127,7 @@ function RiskSettings() {
 
       emailNotificationsEnabled: settings.emailNotificationsEnabled,
       notificationEmail: settings.notificationEmail,
+      emailAlertMinOrderValue: Number(settings.emailAlertMinOrderValue),
       includeOrderDetails: settings.includeOrderDetails,
       includeReasonForFlag: settings.includeReasonForFlag,
       includeRecommendedAction: settings.includeRecommendedAction,
@@ -372,6 +377,27 @@ function RiskSettings() {
               className="mt-2 bg-white border border-gray-300 py-3"
               onChange={(e) => handleChange("notificationEmail", e.target.value)}
             />
+          </Box>
+
+          <Box className="ml-8 w-1/2">
+            <Label className="text-sm font-normal text-slate-600">
+              Only email for high-risk orders at or above this value
+            </Label>
+            <Input
+              type="number"
+              min={0}
+              step="0.01"
+              value={settings.emailAlertMinOrderValue}
+              className="mt-2 bg-white border border-gray-300 py-3"
+              onChange={(e) =>
+                handleChange("emailAlertMinOrderValue", Number(e.target.value) || 0)
+              }
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              0 emails you for every high-risk order. In-app alerts (toast,
+              title bar, Notifications page) always fire regardless of this
+              setting.
+            </p>
           </Box>
 
 
