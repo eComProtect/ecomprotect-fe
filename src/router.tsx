@@ -34,6 +34,8 @@ import EmbeddedEntry from "./pages/embeddedentry.page";
 import BillingPage from "./pages/billing.page";
 import CompleteProfilePage from "./pages/completeprofile.page";
 import EnableNotificationsPage from "./pages/enablenotifications.page";
+import WaiverPage from "./pages/waiver.page";
+import PendingActionsPage from "./pages/pendingactions.page";
 
 export const Router = () => {
   return (
@@ -55,6 +57,7 @@ export const Router = () => {
         <Route path="/accept-invite" element={<AcceptInvitation />} />
         <Route path="/install" element={<ShopifyInstall />} />
         <Route path="/enable-notifications" element={<EnableNotificationsPage />} />
+        <Route path="/waiver/:orderId" element={<WaiverPage />} />
         <Route path="/auth/callback" element={<ShopifyCallback />} />
         <Route
           path="/billing"
@@ -167,6 +170,7 @@ export const Router = () => {
           <Route path="/user/report" element={<UserReport />} />
           <Route path="/user/settings" element={<RiskSettings />} />
           <Route path="/user/order-management" element={<OrderManagement />} />
+          <Route path="/user/pending-actions" element={<PendingActionsPage />} />
           <Route path="/user/create-staff" element={<CreateStaff />} />
         </Route>
 

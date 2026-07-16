@@ -39,6 +39,7 @@ type SettingsState = {
   includeReasonForFlag: boolean;
   includeRecommendedAction: boolean;
   autoHoldRiskyOrders: boolean;
+  actionDelayHours: number;
 };
 
 function RiskSettings() {
@@ -61,6 +62,7 @@ function RiskSettings() {
     includeReasonForFlag: true,
     includeRecommendedAction: true,
     autoHoldRiskyOrders: false,
+    actionDelayHours: 0,
   });
 
   const { mutate: saveSettings, isPending: isSaving } = useCreateSettings();
@@ -99,6 +101,7 @@ function RiskSettings() {
         sendCancellationEmail: f.sendCancellationEmail ?? false,
         includeWavierLink: f.includeWavierLink ?? false,
         autoHoldRiskyOrders: f.autoHoldRiskyOrders ?? false,
+        actionDelayHours: f.actionDelayHours ?? 0,
 
         emailNotificationsEnabled: f.emailNotificationsEnabled ?? true,
         notificationEmail: f.notificationEmail ?? "info@example.com",
@@ -124,6 +127,7 @@ function RiskSettings() {
       sendCancellationEmail: settings.sendCancellationEmail,
       includeWavierLink: settings.includeWavierLink,
       autoHoldRiskyOrders: settings.autoHoldRiskyOrders,
+      actionDelayHours: Number(settings.actionDelayHours),
 
       emailNotificationsEnabled: settings.emailNotificationsEnabled,
       notificationEmail: settings.notificationEmail,
@@ -290,14 +294,40 @@ function RiskSettings() {
           </Box>
 
           <Box className="flex items-center justify-between">
-            <Label>Automatic Fulfilment Hold (on discovery)</Label>
+            <Box>
+              <Label>Automatic Fulfilment Hold (on discovery)</Label>
+              <p className="text-xs text-gray-500">
+                Only applies when Primary Action is "Fulfilment Hold" above.
+                Off means high-risk orders are flagged for your manual
+                review instead of being held automatically.
+              </p>
+            </Box>
             <Switch
               checked={settings.autoHoldRiskyOrders}
               onCheckedChange={(val) => handleChange("autoHoldRiskyOrders", val)}
             />
           </Box>
 
-          
+          <Box>
+            <Label>Delay before automated hold/cancellation (hours)</Label>
+            <Input
+              type="number"
+              min={0}
+              value={settings.actionDelayHours}
+              className="mt-2 w-40 bg-white border border-gray-200"
+              onChange={(e) =>
+                handleChange("actionDelayHours", Number(e.target.value) || 0)
+              }
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              0 acts immediately. Any other value waits that many hours
+              before the automated hold/cancellation actually reaches
+              Shopify, giving staff and the customer (via the waiver email)
+              a window to intervene first.
+            </p>
+          </Box>
+
+
 
           <Box className="flex items-center justify-between">
             <Label>Require customer e-signature</Label>

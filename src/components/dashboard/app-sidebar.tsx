@@ -1,6 +1,7 @@
 import {
   AlertCircle,
   ChevronDown,
+  Clock,
   Globe,
   LayoutGrid,
   Loader2,
@@ -12,6 +13,7 @@ import {
   UserCheck,
   Users,
 } from "lucide-react";
+import { useFetchPendingActions } from "@/hooks/orders/usefetchpendingactions";
 import {
   Sidebar,
   SidebarContent,
@@ -47,6 +49,7 @@ interface MenuItem {
   url: string;
   icon: any;
   subItems?: MenuItem[];
+  badge?: number;
 }
 
 interface AppSidebarProps {
@@ -60,6 +63,10 @@ export function AppSidebar({ role }: AppSidebarProps) {
   const [isLoading, setIsLoading] = useState(false);
   // State for expanded sidebar accordion
   const [openDropdown, setOpenDropdown] = useState("");
+
+  // Only merchants (not superadmins) have pending risk actions of their own.
+  const { data: pendingActions } = useFetchPendingActions(false, role === "user");
+  const pendingActionsCount = pendingActions?.length ?? 0;
 
   const adminMainMenuItems: MenuItem[] = [
     { title: "Dashboard", url: "/admin/dashboard", icon: LayoutGrid },
@@ -112,6 +119,12 @@ export function AppSidebar({ role }: AppSidebarProps) {
       title: "Customer Management",
       url: "/user/customer-management",
       icon: Users,
+    },
+    {
+      title: "Pending Actions",
+      url: "/user/pending-actions",
+      icon: Clock,
+      badge: pendingActionsCount,
     },
     {
       title: "Create Staff",
@@ -173,7 +186,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
               className={`hover:bg-gray-300 hover:text-black flex items-center gap-3 
             ${isParentActive ? "bg-white !text-black" : "text-white"}`}
             >
-              <Link to={item.url} className="flex gap-3 w-full" onClick={handleItemClick}>
+              <Link to={item.url} className="flex gap-3 w-full items-center" onClick={handleItemClick}>
                 <Icon className="size-4 shrink-0" />
                 <span className="block md:hidden ">{item.title}</span>
                 {state === "expanded" && (
@@ -181,6 +194,11 @@ export function AppSidebar({ role }: AppSidebarProps) {
                     <span className="hidden md:block flex-1 text-left">
                       {item.title}
                     </span>
+                    {!!item.badge && (
+                      <span className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white">
+                        {item.badge > 9 ? "9+" : item.badge}
+                      </span>
+                    )}
                     {hasSubItems && (
                       <ChevronDown
                         className={`size-4 shrink-0 transition-transform ${isExpandedDropdownOpen ? "rotate-180" : ""
