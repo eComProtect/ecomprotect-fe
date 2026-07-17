@@ -25,7 +25,7 @@ export const Signin = () => {
           <Box className="flex items-center justify-between text-sm max-sm:flex-col max-sm:items-start max-sm:text-xs text-gray-500">
             <p>© {new Date().getFullYear()} eComProtect. All rights reserved.</p>
             <Box className="space-x-6 max-sm:text-xs">
-              <Link to="" className="hover:underline">
+              <Link to="/privacy" className="hover:underline">
                 Privacy Policy
               </Link>
               <Link to="" className="hover:underline">

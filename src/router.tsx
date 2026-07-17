@@ -36,6 +36,7 @@ import CompleteProfilePage from "./pages/completeprofile.page";
 import EnableNotificationsPage from "./pages/enablenotifications.page";
 import WaiverPage from "./pages/waiver.page";
 import PendingActionsPage from "./pages/pendingactions.page";
+import { PrivacyPolicyPage } from "./pages/privacypolicy.page";
 
 export const Router = () => {
   return (
@@ -58,6 +59,7 @@ export const Router = () => {
         <Route path="/install" element={<ShopifyInstall />} />
         <Route path="/enable-notifications" element={<EnableNotificationsPage />} />
         <Route path="/waiver/:orderId" element={<WaiverPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/auth/callback" element={<ShopifyCallback />} />
         <Route
           path="/billing"
