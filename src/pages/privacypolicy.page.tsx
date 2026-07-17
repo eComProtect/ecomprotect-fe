@@ -3,34 +3,37 @@ import logo from "/images/logo.png";
 
 // ─── Typography helpers ───────────────────────────────────────────────────────
 
+// Polaris ships a global CSS rule: h1,h2,h3,h4,h5,h6,p { font-size:1em; font-weight:var(--p-font-weight-regular) }
+// That element selector wins over Tailwind v4's :where()-scoped utilities (specificity 0).
+// The ! prefix makes the utility !important so our type scale is restored on this public page.
 const H2 = ({ id, children }: { id?: string; children: React.ReactNode }) => (
   <h2
     id={id}
-    className="mb-3 mt-10 scroll-mt-20 border-b border-gray-200 pb-2 text-xl font-semibold text-gray-900"
+    className="mb-4 mt-16 scroll-mt-20 border-b border-gray-200 pb-3 !text-[1.75rem] !font-bold leading-snug text-gray-900"
   >
     {children}
   </h2>
 );
 
 const H3 = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="mb-2 mt-6 text-base font-semibold text-gray-800">{children}</h3>
+  <h3 className="mb-3 mt-8 !text-lg !font-semibold text-gray-800">{children}</h3>
 );
 
 const P = ({ children }: { children: React.ReactNode }) => (
-  <p className="mb-4 leading-relaxed text-gray-700">{children}</p>
+  <p className="mb-5 !text-[1.0625rem] leading-[1.75] text-gray-700">{children}</p>
 );
 
 const UL = ({ children }: { children: React.ReactNode }) => (
-  <ul className="mb-4 ml-6 list-disc space-y-1 text-gray-700">{children}</ul>
+  <ul className="mb-5 ml-7 list-disc space-y-2 !text-[1.0625rem] leading-[1.75] text-gray-700">{children}</ul>
 );
 
 const LI = ({ children }: { children: React.ReactNode }) => (
-  <li className="leading-relaxed">{children}</li>
+  <li>{children}</li>
 );
 
 const Table = ({ children }: { children: React.ReactNode }) => (
-  <div className="mb-6 overflow-x-auto rounded-lg border border-gray-200">
-    <table className="min-w-full divide-y divide-gray-200 text-sm">{children}</table>
+  <div className="mb-8 overflow-x-auto rounded-lg border border-gray-200">
+    <table className="min-w-full divide-y divide-gray-200">{children}</table>
   </div>
 );
 
@@ -44,14 +47,14 @@ const TBody = ({ children }: { children: React.ReactNode }) => (
 
 const TH = ({ children, wide }: { children: React.ReactNode; wide?: boolean }) => (
   <th
-    className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 ${wide ? "w-2/3" : ""}`}
+    className={`px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 ${wide ? "w-2/3" : ""}`}
   >
     {children}
   </th>
 );
 
 const TD = ({ children }: { children: React.ReactNode }) => (
-  <td className="px-4 py-3 align-top text-gray-700">{children}</td>
+  <td className="px-5 py-4 align-top text-[1.0625rem] leading-[1.7] text-gray-700">{children}</td>
 );
 
 const TR = ({ children, shaded }: { children: React.ReactNode; shaded?: boolean }) => (
@@ -59,7 +62,7 @@ const TR = ({ children, shaded }: { children: React.ReactNode; shaded?: boolean 
 );
 
 const Code = ({ children }: { children: React.ReactNode }) => (
-  <code className="rounded bg-gray-100 px-1 font-mono text-xs">{children}</code>
+  <code className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[0.85em]">{children}</code>
 );
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -79,10 +82,10 @@ export const PrivacyPolicyPage = () => {
 
       {/* ── Document ── */}
       <main className="mx-auto max-w-5xl px-6 py-12">
-        <article>
+        <article className="mx-auto max-w-[780px]">
           {/* ── Title block ── */}
           <div className="mb-10">
-            <h1 className="mb-4 text-3xl font-bold text-gray-900">Privacy Policy</h1>
+            <h1 className="mb-4 !text-4xl !font-bold text-gray-900">Privacy Policy</h1>
             <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
               <span><strong>Version:</strong> 1.0</span>
               <span><strong>Effective date:</strong> 1st June 2026</span>
@@ -106,7 +109,7 @@ export const PrivacyPolicyPage = () => {
 
           {/* ── Publication details ── */}
           <div className="mb-8 rounded-lg border border-blue-100 bg-blue-50 p-5 text-sm">
-            <p className="mb-2 font-semibold text-gray-800">Publication Details</p>
+            <p className="mb-2 !text-[1.0625rem] !font-semibold text-gray-800">Publication Details</p>
             <dl className="grid grid-cols-1 gap-y-1 sm:grid-cols-[auto_1fr] sm:gap-x-4 text-gray-700">
               <dt className="font-medium whitespace-nowrap">Legal entity</dt>
               <dd>Excevo Ltd, company number 12980668</dd>
