@@ -39,6 +39,7 @@ import { PiDotsNineBold } from "react-icons/pi";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaBell } from "react-icons/fa";
 import { authClient } from "../../providers/user.provider";
+import { isEmbedded } from "@/configs/appbridge.config";
 import { toast } from "react-hot-toast";
 import { FaUserPlus } from "react-icons/fa6";
 import whiteLogo from "/icons/logo_icon.png";
@@ -248,7 +249,14 @@ export function AppSidebar({ role }: AppSidebarProps) {
   const handleLogout = async () => {
     setIsLoading(true);
     try {
-      await authClient.signOut();
+      // Embedded (App Bridge) sessions are never cookie-based — every request
+      // is authenticated independently via a fresh session token, so there's
+      // no cookie session for better-auth's sign-out endpoint to invalidate.
+      // Calling it here always 400s ("Failed to get session") and blocks the
+      // rest of this function via the catch below.
+      if (!isEmbedded) {
+        await authClient.signOut();
+      }
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       if (role === "admin") {
