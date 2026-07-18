@@ -2,7 +2,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { isEmbedded } from "@/configs/appbridge.config";
+import { setStaffToken } from "@/configs/staffsession";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Checkbox } from "../../components/ui/checkbox";
@@ -42,6 +45,8 @@ export const SigninForm = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   // 2. Define your form using the updated schema
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -67,9 +72,36 @@ export const SigninForm = () => {
         onRequest: () => {
           setLoading(true);
         },
-        onSuccess: async () => {
+        onSuccess: async (ctx) => {
           console.log("Refreshed session data:", session);
           setLoading(false);
+
+          // Reached via EmbeddedStaffGate (see embeddedstaffgate.tsx): Shopify's
+          // App Bridge token can't tell staff members apart, so the token this
+          // sign-in just returned is stored and sent as x-staff-token on every
+          // request instead, and we return into the embedded app rather than
+          // the standalone dashboard.
+          if (isEmbedded) {
+            const token = (ctx.data as { token?: string } | undefined)?.token;
+            if (token) setStaffToken(token);
+            // The identity query was already fetched (and cached) as the
+            // owner before EmbeddedStaffGate redirected here — without this,
+            // useIdentity would keep serving that stale owner data instead of
+            // re-fetching /user/me with the new x-staff-token header.
+            queryClient.invalidateQueries({ queryKey: ["identity", "me"] });
+
+            const shop = searchParams.get("shop") ?? "";
+            const host = searchParams.get("host") ?? "";
+            const returnTo =
+              searchParams.get("returnTo") || "/user/customer-management";
+            const [path, existingQuery] = returnTo.split("?");
+            const destParams = new URLSearchParams(existingQuery || "");
+            destParams.set("shop", shop);
+            destParams.set("host", host);
+            navigate(`${path}?${destParams.toString()}`, { replace: true });
+            return;
+          }
+
           navigate("/user/customer-management");
         },
         onError: (error) => {

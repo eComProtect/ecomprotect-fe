@@ -1,7 +1,7 @@
-import { useState, type ReactNode } from "react";
-import { isEmbedded } from "@/configs/appbridge.config";
+import { type ReactNode } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { isEmbedded, shop, host } from "@/configs/appbridge.config";
 import { getStaffToken } from "@/configs/staffsession";
-import { EmbeddedStaffIdentifyForm } from "@/components/authform/embeddedstaffidentify.form";
 
 /**
  * Gates merchant-facing routes behind a one-time-per-browser-session staff
@@ -9,13 +9,19 @@ import { EmbeddedStaffIdentifyForm } from "@/components/authform/embeddedstaffid
  * the App Bridge token alone can't tell staff members apart from the owner.
  * A no-op outside the embedded context (standalone cookie login already
  * identifies the user correctly).
+ *
+ * Reuses the existing /signin page rather than a separate embedded-only
+ * form — see signin.form.tsx for the returnTo/staff-token handling.
  */
 export function EmbeddedStaffGate({ children }: { children: ReactNode }) {
-  const [identified, setIdentified] = useState(() => !isEmbedded || Boolean(getStaffToken()));
+  const location = useLocation();
 
-  if (!isEmbedded || identified) {
+  if (!isEmbedded || getStaffToken()) {
     return <>{children}</>;
   }
 
-  return <EmbeddedStaffIdentifyForm onIdentified={() => setIdentified(true)} />;
+  const params = new URLSearchParams({ shop, host });
+  params.set("returnTo", location.pathname + location.search);
+
+  return <Navigate to={`/signin?${params.toString()}`} replace />;
 }
