@@ -154,7 +154,7 @@ export function SuspiciousOrdersReport() {
         <Card className="border-1 shadow-xs border-gray-200">
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">Prevented Value (£)</p>
-            <p className="text-2xl font-bold">{metrics.preventedValue}</p>
+            <p className="text-2xl font-bold">{metrics.preventedValue.toFixed(2)}</p>
           </CardContent>
         </Card>
       </div>
