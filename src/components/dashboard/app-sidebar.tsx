@@ -40,6 +40,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaBell } from "react-icons/fa";
 import { authClient } from "../../providers/user.provider";
 import { isEmbedded } from "@/configs/appbridge.config";
+import { clearStaffToken } from "@/configs/staffsession";
 import { toast } from "react-hot-toast";
 import { FaUserPlus } from "react-icons/fa6";
 import whiteLogo from "/icons/logo_icon.png";
@@ -254,10 +255,19 @@ export function AppSidebar({ role }: AppSidebarProps) {
       // no cookie session for better-auth's sign-out endpoint to invalidate.
       // Calling it here always 400s ("Failed to get session") and blocks the
       // rest of this function via the catch below.
-      if (!isEmbedded) {
+      if (isEmbedded) {
+        // No cookie session to sign out of — instead drop this browser
+        // session's staff identity so EmbeddedStaffGate prompts again.
+        clearStaffToken();
+      } else {
         await authClient.signOut();
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
+
+      if (isEmbedded) {
+        window.location.reload();
+        return;
+      }
 
       if (role === "admin") {
         navigate("/admin-signin");

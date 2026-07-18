@@ -1,6 +1,7 @@
 import ax, { AxiosError } from "axios";
 import { Redirect } from "@shopify/app-bridge/actions";
 import { fetchSessionToken, getAppBridge, isEmbedded } from "./appbridge.config";
+import { getStaffToken } from "./staffsession";
 
 export const envirnoment = import.meta.env.VITE_NODE_ENV;
 export type ErrorWithMessage = AxiosError<WithMessage>;
@@ -36,6 +37,15 @@ axios.interceptors.request.use(async (config) => {
     const token = await fetchSessionToken();
     if (token) {
       config.headers.set("Authorization", `Bearer ${token}`);
+    }
+
+    // Staff members have no identity of their own in the App Bridge token
+    // above (it only proves "this is the shop") — if they've identified
+    // themselves this browser session, ride their own session token along
+    // separately so the backend can resolve their actual staff record.
+    const staffToken = getStaffToken();
+    if (staffToken) {
+      config.headers.set("x-staff-token", staffToken);
     }
   }
   return config;
