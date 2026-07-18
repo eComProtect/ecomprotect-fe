@@ -31,12 +31,19 @@ function EmptyStateMessage({ message }: { message: string }) {
   );
 }
 
+const MAX_ENTRIES_PER_COLUMN = 5;
+
 export function RecentActivitySection() {
-  const { data: activities, isLoading, error } = useRecentActivities(10);
+  // Fetch a larger pool than we display: the two columns split a single
+  // combined feed by `for`, so a small combined limit lets one type (e.g.
+  // frequent UPSERT_CUSTOMER activity) crowd out the other before either
+  // column even gets to show its own 5.
+  const { data: activities, isLoading, error } = useRecentActivities(50);
 
   const invoiceActivities =
-    activities?.filter((a) => a.for === "customer") ?? [];
-  const retailerActivities = activities?.filter((a) => a.for === "store") ?? [];
+    activities?.filter((a) => a.for === "customer").slice(0, MAX_ENTRIES_PER_COLUMN) ?? [];
+  const retailerActivities =
+    activities?.filter((a) => a.for === "store").slice(0, MAX_ENTRIES_PER_COLUMN) ?? [];
 
   return (
     <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
