@@ -67,7 +67,7 @@ export function SuspiciousOrdersReport() {
     const formattedDate = format(new Date(), "yyyy-MM-dd");
     generateReport(
       {
-        url: "/reports/high-risk-csutomer-report",
+        url: "/reports/high-risk-csutomer-report/pdf",
         fileName: `High-Risk_Activity_Report_${formattedDate}.pdf`,
       },
       {
