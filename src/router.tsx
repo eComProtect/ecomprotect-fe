@@ -1,4 +1,4 @@
-import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { Signup } from "./pages/signup.page";
 import { Signin } from "./pages/signin.page";
 import { Settings } from "./pages/settings.page";
@@ -37,6 +37,43 @@ import EnableNotificationsPage from "./pages/enablenotifications.page";
 import WaiverPage from "./pages/waiver.page";
 import PendingActionsPage from "./pages/pendingactions.page";
 import { PrivacyPolicyPage } from "./pages/privacypolicy.page";
+
+/**
+ * Catch-all for any pathname that isn't a defined route.
+ *
+ * Route matching in this app is purely pathname-based (React Router ignores
+ * the query string entirely) — so this only fires when the actual pathname
+ * Shopify loaded the iframe at doesn't match any route, NOT because of an
+ * unrecognized query param like appLoadId. If Shopify Admin loaded us with
+ * shop+host present, that's a strong signal we're embedded but landed on an
+ * unexpected path (e.g. the Application URL configured in Partner Dashboard
+ * for whatever app entry the merchant installed carries a stray path
+ * suffix). Rather than stranding the merchant on a dead-end 404, bounce back
+ * to "/" with shop/host preserved so EmbeddedEntry's onboarding-stage gate
+ * still runs. A plain visitor hitting a genuinely bad URL (no shop/host)
+ * still gets the real NotFoundPage.
+ */
+const CatchAll = () => {
+  const params = new URLSearchParams(window.location.search);
+  const shop = params.get("shop");
+  const host = params.get("host");
+
+  if (shop && host) {
+    console.warn(
+      `[Router] Unmatched pathname "${window.location.pathname}" with shop/host present — ` +
+        `redirecting to "/" instead of showing 404. Check the Application URL configured ` +
+        `in the Shopify Partner Dashboard for a stray path suffix.`
+    );
+    return (
+      <Navigate
+        to={`/?shop=${encodeURIComponent(shop)}&host=${encodeURIComponent(host)}`}
+        replace
+      />
+    );
+  }
+
+  return <NotFoundPage />;
+};
 
 export const Router = () => {
   return (
@@ -176,8 +213,8 @@ export const Router = () => {
           <Route path="/user/create-staff" element={<CreateStaff />} />
         </Route>
 
-        {/* Top-level Catch-all 404 Route */}
-        <Route path="*" element={<NotFoundPage />} />
+        {/* Top-level Catch-all — 404 for plain visitors, recovery redirect when embedded */}
+        <Route path="*" element={<CatchAll />} />
       </Routes>
     </BrowserRouter>
   );
