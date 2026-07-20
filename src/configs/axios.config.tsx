@@ -1,6 +1,5 @@
 import ax, { AxiosError } from "axios";
-import { Redirect } from "@shopify/app-bridge/actions";
-import { fetchSessionToken, getAppBridge, isEmbedded } from "./appbridge.config";
+import { fetchSessionToken, isEmbedded } from "./appbridge.config";
 import { getStaffToken } from "./staffsession";
 
 export const envirnoment = import.meta.env.VITE_NODE_ENV;
@@ -57,6 +56,12 @@ axios.interceptors.request.use(async (config) => {
 // response: requests just failed and data quietly disappeared with no
 // explanation or way to recover. Redirect straight to reAuthUrl (re-running
 // OAuth), the same as EmbeddedEntry's own needs_login recovery path.
+//
+// v3 needed App Bridge's Redirect.Action.REMOTE to break out of the Admin
+// iframe to the top-level window. v4 has no equivalent API — Shopify's own
+// migration guide replaces it with a plain window.open(url, '_top'), which
+// works identically whether or not we're actually embedded (outside an
+// iframe, '_top' just targets the current window).
 let reAuthRedirectInFlight = false;
 
 axios.interceptors.response.use(
@@ -71,12 +76,7 @@ axios.interceptors.response.use(
       !reAuthRedirectInFlight
     ) {
       reAuthRedirectInFlight = true;
-      const app = getAppBridge();
-      if (isEmbedded && app) {
-        Redirect.create(app).dispatch(Redirect.Action.REMOTE, data.reAuthUrl);
-      } else {
-        window.location.href = data.reAuthUrl;
-      }
+      window.open(data.reAuthUrl, "_top");
     }
 
     return Promise.reject(error);

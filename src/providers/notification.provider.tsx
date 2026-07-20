@@ -88,8 +88,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     <NotificationContext.Provider
       value={{ notifications, unreadCount, isLoading, isError, markAsSeen, reload }}
     >
-      {/* Only mountable inside <AppBridgeProvider> (see main.tsx) — useToast/
-          TitleBar both throw without it, so this must stay conditional. */}
+      {/* useAppBridge()/TitleBar depend on the window.shopify global that App
+          Bridge v4's CDN script only populates when actually embedded (see
+          index.html, appbridge.config.ts) — keep this conditional. */}
       {isEmbedded && (
         <EmbeddedChrome
           latestNotification={latestLiveNotification}
