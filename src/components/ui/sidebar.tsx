@@ -493,7 +493,7 @@ function SidebarMenuButton({
   tooltip,
   className,
   ...props
-}: Omit<React.ComponentProps<"button">, "variant"> & {
+}: React.ComponentProps<"button"> & {
   asChild?: boolean;
   isActive?: boolean;
   tooltip?: string | React.ComponentProps<typeof TooltipContent>;
