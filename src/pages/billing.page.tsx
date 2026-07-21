@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck, Loader2 } from "lucide-react";
+import { Redirect } from "@shopify/app-bridge/actions";
 import { axios } from "@/configs/axios.config";
-import { host } from "@/configs/appbridge.config";
+import { getAppBridge, isEmbedded, host } from "@/configs/appbridge.config";
 import { useIdentity } from "@/hooks/useidentity";
 import { Box } from "@/components/ui/box";
 import { Flex } from "@/components/ui/flex";
@@ -30,7 +31,7 @@ interface MerchantPlan {
  * Embedded plan-selection / billing page. Prices come from the backend
  * (GET /api/billing/plans, resolved for the merchant's order tier). Selecting a plan
  * creates a Shopify app subscription and redirects the TOP window to Shopify's
- * confirmation screen (window.open(url, '_top') — same iframe-breakout used for OAuth).
+ * confirmation screen (App Bridge REMOTE — same iframe-breakout used for OAuth).
  */
 const BillingPage = () => {
   const { user } = useIdentity();
@@ -84,12 +85,13 @@ const BillingPage = () => {
       const confirmationUrl: string | undefined = res.data?.confirmationUrl;
       if (!confirmationUrl) throw new Error("No confirmation URL returned.");
 
-      // Break out of the Admin iframe to Shopify's billing confirmation
-      // screen. '_top' targets the topmost browsing context — works the same
-      // whether or not we're actually embedded. (v3 needed App Bridge's
-      // Redirect.Action.REMOTE for this; v4 has no equivalent API — Shopify's
-      // own migration guide replaces it with plain window.open.)
-      window.open(confirmationUrl, "_top");
+      const app = getAppBridge();
+      if (isEmbedded && app) {
+        // Break out of the Admin iframe to Shopify's billing confirmation screen.
+        Redirect.create(app).dispatch(Redirect.Action.REMOTE, confirmationUrl);
+      } else {
+        window.location.href = confirmationUrl;
+      }
     } catch (e: any) {
       setError(
         e?.response?.data?.message || e?.message || "Failed to start checkout."

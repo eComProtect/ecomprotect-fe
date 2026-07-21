@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
+import { TitleBar, useToast } from "@shopify/app-bridge-react";
 
 interface LiveNotification {
   id: string;
@@ -17,14 +16,13 @@ interface EmbeddedChromeProps {
 /**
  * Wires the App Bridge Toast + TitleBar to the live notification stream.
  *
- * v4 has no useToast hook and no secondaryActions prop on TitleBar — both
- * are reached through the useAppBridge() global (shopify.toast.show(...)),
- * and TitleBar actions are now plain React children (buttons), not a
- * config-object prop.
+ * Must only ever be mounted inside <AppBridgeProvider> — useToast/TitleBar
+ * both call useAppBridge() internally, which throws if there's no provider
+ * in the tree. The caller (NotificationProvider) only renders this when
+ * `isEmbedded` is true, so this component itself doesn't need to re-check.
  */
 export const EmbeddedChrome = ({ latestNotification, unreadCount }: EmbeddedChromeProps) => {
-  const shopify = useAppBridge();
-  const navigate = useNavigate();
+  const { show } = useToast();
   const lastShownId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -32,16 +30,18 @@ export const EmbeddedChrome = ({ latestNotification, unreadCount }: EmbeddedChro
       return;
     }
     lastShownId.current = latestNotification.id;
-    shopify.toast.show(latestNotification.title || latestNotification.message, {
-      duration: 6000,
-    });
-  }, [latestNotification, shopify]);
+    show(latestNotification.title || latestNotification.message, { duration: 6000 });
+  }, [latestNotification, show]);
 
   return (
-    <TitleBar title={unreadCount > 0 ? `eComProtect (${unreadCount})` : "eComProtect"}>
-      <button variant="primary" onClick={() => navigate("/user/notification")}>
-        {unreadCount > 0 ? `${unreadCount} unread` : "Notifications"}
-      </button>
-    </TitleBar>
+    <TitleBar
+      title={unreadCount > 0 ? `eComProtect (${unreadCount})` : "eComProtect"}
+      secondaryActions={[
+        {
+          content: unreadCount > 0 ? `${unreadCount} unread` : "Notifications",
+          url: "/user/notification",
+        },
+      ]}
+    />
   );
 };

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Redirect } from "@shopify/app-bridge/actions";
+import { getAppBridge, isEmbedded } from "@/configs/appbridge.config";
 
 const ShopifyLoadingState = ({ text }: { text: string }) => (
   <main className="flex min-h-screen items-center justify-center bg-white px-6">
@@ -24,16 +26,16 @@ export const ShopifyInstall = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
     const installUrl = `${apiUrl}/shopify/install?shop=${encodeURIComponent(shop)}`;
 
-    // Inside the Admin iframe, a same-frame redirect only navigates the
-    // iframe, so the OAuth state cookie would be set in a blocked
-    // third-party context. '_top' targets the topmost browsing context —
-    // this works identically whether or not we're actually embedded (outside
-    // an iframe, '_top' just resolves to the current window) — so OAuth
-    // always runs first-party and the cookie survives through to
-    // /shopify/callback. (App Bridge v3's Redirect.Action.REMOTE did this
-    // same thing via an extra layer of indirection; v4 has no equivalent API
-    // — Shopify's own migration guide replaces it with plain window.open.)
-    window.open(installUrl, "_top");
+    const app = getAppBridge();
+    if (isEmbedded && app) {
+      // Inside the Admin iframe, a plain redirect only navigates the iframe, so the
+      // OAuth state cookie would be set in a blocked third-party context. Use App
+      // Bridge REMOTE redirect to drive the TOP-LEVEL window to the install URL, so
+      // OAuth runs first-party and the cookie survives through to /shopify/callback.
+      Redirect.create(app).dispatch(Redirect.Action.REMOTE, installUrl);
+    } else {
+      window.location.href = installUrl;
+    }
   }, []);
 
   if (error) {
