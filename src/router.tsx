@@ -1,4 +1,4 @@
-import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
+import { Outlet, Route, Routes } from "react-router-dom";
 import { Signup } from "./pages/signup.page";
 import { Signin } from "./pages/signin.page";
 import { Settings } from "./pages/settings.page";
@@ -40,7 +40,6 @@ import { PrivacyPolicyPage } from "./pages/privacypolicy.page";
 
 export const Router = () => {
   return (
-    <BrowserRouter>
       <Routes>
         {/* Public Routes */}
         <Route path="/signin" element={<Signin />} />
@@ -179,6 +178,5 @@ export const Router = () => {
         {/* Top-level Catch-all 404 Route */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </BrowserRouter>
   );
 };
