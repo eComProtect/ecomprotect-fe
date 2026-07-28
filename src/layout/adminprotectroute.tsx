@@ -1,7 +1,7 @@
 import { Flex } from "@/components/ui/flex";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/providers/user.provider";
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 
 type StaffProtectedRouteProps = {
@@ -9,23 +9,13 @@ type StaffProtectedRouteProps = {
 };
 
 export const AdminProtectedRoute = ({ children }: StaffProtectedRouteProps) => {
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  // Reads the reactive session store rather than a one-shot getSession() in an
+  // effect. The effect version latched whatever that first call returned (empty
+  // dep array, no retry, any failure read as "no access"), so a session that
+  // resolved a moment later could never un-stick the redirect to /admin-signin.
+  const { data: session, isPending } = authClient.useSession();
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const session = await authClient.getSession();
-      const userRole = session?.data?.user?.role;
-
-      console.log("userRole", userRole);
-      console.log("SESSION:-", session);
-
-      setHasAccess(userRole === "superadmin");
-    };
-
-    checkSession();
-  }, []);
-
-  if (hasAccess === null) {
+  if (isPending) {
     return (
       <Flex className="w-full h-[100vh] justify-center items-center">
         <Spinner />
@@ -33,7 +23,7 @@ export const AdminProtectedRoute = ({ children }: StaffProtectedRouteProps) => {
     );
   }
 
-  if (!hasAccess) {
+  if ((session?.user as { role?: string } | undefined)?.role !== "superadmin") {
     return <Navigate to="/admin-signin" replace />;
   }
 
@@ -45,20 +35,11 @@ type PublicAdminRouteProps = {
 };
 
 export const PublicAdminRoute = ({ children }: PublicAdminRouteProps) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  // Same reasoning as AdminProtectedRoute above — reactive store, not a latched
+  // one-shot check.
+  const { data: session, isPending } = authClient.useSession();
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const session = await authClient.getSession();
-      const userRole = session?.data?.user?.role;
-
-      setIsAuthenticated(userRole === "user" || userRole === "sub-admin");
-    };
-
-    checkSession();
-  }, []);
-
-  if (isAuthenticated === null) {
+  if (isPending) {
     return (
       <Flex className="w-full h-[100vh] justify-center items-center">
         <Spinner />
@@ -66,7 +47,9 @@ export const PublicAdminRoute = ({ children }: PublicAdminRouteProps) => {
     );
   }
 
-  if (isAuthenticated) {
+  const userRole = (session?.user as { role?: string } | undefined)?.role;
+
+  if (userRole === "user" || userRole === "sub-admin") {
     return <Navigate to="/dashboard" replace />;
   }
 

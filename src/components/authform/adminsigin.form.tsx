@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -31,11 +31,52 @@ const formSchema = z.object({
   rememberMe: z.boolean().default(false).optional(),
 });
 
+// How long to wait for the session store to carry the new session before
+// treating the sign-in as failed rather than leaving the form spinning.
+const SESSION_WAIT_TIMEOUT_MS = 5000;
+
 export const AdminSigninForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+  const [sessionTimedOut, setSessionTimedOut] = useState(false);
+
+  const { data: session, refetch } = authClient.useSession();
 
   const navigate = useNavigate();
+
+  // The sign-in response sets the cookie, but the shared better-auth session
+  // store that ProtectedRoute/AdminProtectedRoute read is only revalidated
+  // asynchronously afterwards — and UserProvider keeps that store mounted for
+  // the whole app, so until it revalidates it still holds the resolved
+  // "no session" snapshot from this page. Navigating straight out of onSuccess
+  // races that revalidation: whichever lands first decides whether the guards
+  // see the session or bounce back here, which is why the redirect only worked
+  // some of the time. So wait for the store to actually carry the session
+  // before leaving.
+  useEffect(() => {
+    if (!signedIn) return;
+
+    if (session?.user) {
+      navigate("/admin/dashboard", { replace: true });
+      return;
+    }
+
+    if (sessionTimedOut) {
+      setSignedIn(false);
+      setSessionTimedOut(false);
+      setAuthChecked(false);
+      toast.error("Could not start your session. Please sign in again.");
+      return;
+    }
+
+    const timer = setTimeout(
+      () => setSessionTimedOut(true),
+      SESSION_WAIT_TIMEOUT_MS
+    );
+    return () => clearTimeout(timer);
+  }, [signedIn, session, sessionTimedOut, navigate]);
+
   // 2. Define your form using the updated schema
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,8 +102,12 @@ export const AdminSigninForm = () => {
         },
         onSuccess: () => {
           toast.success("Signed in successfully!");
-          navigate("/admin/dashboard");
-          setAuthChecked(false);
+          // Kick the shared session store now instead of relying on
+          // better-auth's own post-sign-in revalidation to land first; the
+          // effect above does the actual redirect once it carries the session.
+          // authChecked stays true so the button keeps its spinner until then.
+          setSignedIn(true);
+          refetch();
         },
         onError: (ctx) => {
           toast.error(ctx.error.message);
