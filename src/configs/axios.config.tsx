@@ -1,4 +1,5 @@
 import ax, { AxiosError } from "axios";
+import toast from "react-hot-toast";
 import { fetchSessionToken, isEmbedded } from "./appbridge.config";
 import { getStaffToken } from "./staffsession";
 
@@ -54,15 +55,44 @@ axios.interceptors.request.use(async (config) => {
 // returns { error: "SHOPIFY_TOKEN_EXPIRED", reAuthUrl } (401) when a token
 // can't be silently renewed, and nothing was previously acting on that
 // response: requests just failed and data quietly disappeared with no
-// explanation or way to recover. Redirect straight to reAuthUrl (re-running
-// OAuth), the same as EmbeddedEntry's own needs_login recovery path.
+// explanation or way to recover.
 //
-// v3 needed App Bridge's Redirect.Action.REMOTE to break out of the Admin
-// iframe to the top-level window. v4 has no equivalent API — Shopify's own
-// migration guide replaces it with a plain window.open(url, '_top'), which
-// works identically whether or not we're actually embedded (outside an
-// iframe, '_top' just targets the current window).
+// Recovering means re-running OAuth, and reAuthUrl (shopifyReAuthUrl →
+// /shopify/install) hands off to Shopify's authorize page, which for an
+// embedded app lives on admin.shopify.com. Inside the Admin iframe that is
+// exactly right — it's where the merchant already is, and it matches
+// EmbeddedEntry's own needs_login recovery path. On the standalone website it
+// is not: this used to fire for any such 401, including the very first
+// dashboard data request after a store owner signed in on the website, and
+// window.open('_top') drags the *whole tab* (outside an iframe '_top' is the
+// current window) off the site and into Shopify Admin's embedded app.
+//
+// So: embedded keeps the automatic hand-off; standalone stays on the website
+// and offers reconnecting as an action the merchant chooses to take.
 let reAuthRedirectInFlight = false;
+
+const promptShopifyReconnect = (reAuthUrl: string) => {
+  // Shared id: repeat 401s (several data hooks usually fail together) update
+  // this one toast instead of stacking up.
+  toast.error(
+    (t) => (
+      <span className="flex items-center gap-3">
+        Your Shopify connection has expired, so store data can't load.
+        <button
+          type="button"
+          className="shrink-0 rounded-md bg-blue-600 px-2 py-1 text-xs font-semibold text-white"
+          onClick={() => {
+            toast.dismiss(t.id);
+            window.open(reAuthUrl, "_top");
+          }}
+        >
+          Reconnect
+        </button>
+      </span>
+    ),
+    { id: "shopify-reauth", duration: Infinity }
+  );
+};
 
 axios.interceptors.response.use(
   (response) => response,
@@ -72,11 +102,16 @@ axios.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       data?.error === "SHOPIFY_TOKEN_EXPIRED" &&
-      data.reAuthUrl &&
-      !reAuthRedirectInFlight
+      data.reAuthUrl
     ) {
-      reAuthRedirectInFlight = true;
-      window.open(data.reAuthUrl, "_top");
+      if (isEmbedded) {
+        if (!reAuthRedirectInFlight) {
+          reAuthRedirectInFlight = true;
+          window.open(data.reAuthUrl, "_top");
+        }
+      } else {
+        promptShopifyReconnect(data.reAuthUrl);
+      }
     }
 
     return Promise.reject(error);
