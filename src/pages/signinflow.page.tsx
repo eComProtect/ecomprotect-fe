@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "../components/ui/button";
 import { ShieldCheck, BarChart2, Briefcase, Loader2 } from "lucide-react";
 import { axios } from "../configs/axios.config";
@@ -9,106 +10,51 @@ import logo from "/images/logo.png";
 import { Box } from "@/components/ui/box";
 import { Flex } from "@/components/ui/flex";
 
+/** Shape returned by GET /api/billing/plans (see plansForMerchant). */
+type ApiPlan = {
+  name: string;
+  description: string;
+  features: string[];
+  price: number;
+  currency: string;
+  available: boolean;
+};
+
+const PLAN_ICONS: Record<string, typeof BarChart2> = {
+  "ECP Insight": BarChart2,
+  "ECP Vision": ShieldCheck,
+  "ECP Shield": Briefcase,
+};
+
 const PackageSelectionComponent = ({
   onSelectPackage,
 }: {
-  onSelectPackage: (pkg: {
-    name: string;
-    price: number;
-    currency: string;
-    plan: string;
-    priceId: string;
-  }) => void;
+  onSelectPackage: (pkg: { name: string; price: number; currency: string }) => void;
 }) => {
-  const { data, isPending } = authClient.useSession();
+  // Session is still awaited before rendering prices: /billing/plans is behind
+  // protectRoute and resolves the tier from the merchant's own row, so there's
+  // nothing to read off the session object here any more.
+  const { isPending: sessionPending } = authClient.useSession();
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
 
-  const packages = [
-    {
-      name: "ECP Insight",
-      description: "Lost Data Access Only",
-      features: [
-        "Access to lost data insights",
-        "Basic analytics dashboard",
-        "Email support",
-      ],
-      icon: BarChart2,
-      priceId:
-        data?.user?.average_orders_per_month === "0-300"
-          ? "price_1SCiNzHCrwRt7F86dQ21B142"
-          : data?.user?.average_orders_per_month === "301-2,000"
-          ? "price_1SCiR5HCrwRt7F86JWHkcldo"
-          : data?.user?.average_orders_per_month === "2,001-5,000"
-          ? "price_1SCiSQHCrwRt7F86SYBzh0v0"
-          : "price_1SCiNzHCrwRt7F86dQ21B142",
-      price:
-        data?.user?.average_orders_per_month === "0-300"
-          ? 399
-          : data?.user?.average_orders_per_month === "301-2,000"
-          ? 799
-          : data?.user?.average_orders_per_month === "2,001-5,000"
-          ? 1499
-          : 399,
-      currency: "GBP",
-      available: true,
-    },
-    {
-      name: "ECP Vision",
-      description: "Lost Data + % Loss Rate",
-      features: [
-        "All features from ECP Insight",
-        "Detailed loss rate percentage",
-        "Priority email support",
-      ],
-      icon: ShieldCheck,
-      priceId:
-        data?.user?.average_orders_per_month === "0-300"
-          ? "price_1SCiKeHCrwRt7F86pRVFlUE5"
-          : data?.user?.average_orders_per_month === "301-2,000"
-          ? "price_1SCiQTHCrwRt7F86iFHMRxNu"
-          : data?.user?.average_orders_per_month === "2,001-5,000"
-          ? "price_1SCiS3HCrwRt7F86OlCRIROT"
-          : "price_1SCiKeHCrwRt7F86pRVFlUE5",
-      price:
-        data?.user?.average_orders_per_month === "0-300"
-          ? 299
-          : data?.user?.average_orders_per_month === "301-2,000"
-          ? 699
-          : data?.user?.average_orders_per_month === "2,001-5,000"
-          ? 1249
-          : 399,
-      currency: "GBP",
-      available: true,
-    },
-    {
-      name: "ECP Shield",
-      description: "Lost Data + % Loss Rate + Waiver Workflow",
-      features: [
-        "All features from ECP Vision",
-        "Automated waiver workflow",
-        "Dedicated account manager",
-      ],
-      icon: Briefcase,
-      priceId:
-        data?.user?.average_orders_per_month === "0-300"
-          ? "price_1SCiPTHCrwRt7F869QlJmX3W"
-          : data?.user?.average_orders_per_month === "301-2,000"
-          ? "price_1SCiRUHCrwRt7F86k3IbSlHW"
-          : data?.user?.average_orders_per_month === "2,001-5,000"
-          ? "price_1SCiSnHCrwRt7F86OUxeWrZ3"
-          : "price_1SCiPTHCrwRt7F869QlJmX3W",
-      price:
-        data?.user?.average_orders_per_month === "0-300"
-          ? 499
-          : data?.user?.average_orders_per_month === "301-2,000"
-          ? 899
-          : data?.user?.average_orders_per_month === "2,001-5,000"
-          ? 1749
-          : 499,
-      currency: "GBP",
-      available: false,
-    },
-  ];
+  // Pricing (including which Stripe Price each package maps to) is owned by the
+  // backend's BILLING_PLANS matrix and served by GET /api/billing/plans, already
+  // resolved for this merchant's order tier. It used to be duplicated here as a
+  // hardcoded price-per-tier ladder plus raw Stripe price IDs, which drifted from
+  // the Shopify billing prices and let the browser choose its own price.
+  const { data: plans, isLoading: plansLoading } = useQuery<ApiPlan[]>({
+    queryKey: ["billing", "plans"],
+    // Body is { message, data: BillingPlan[] } — the plan array is under `data`.
+    queryFn: async () => (await axios.get("/billing/plans")).data?.data ?? [],
+  });
+
+  // Icons are presentation-only, so they stay client-side, keyed by plan name.
+  const packages = (plans ?? []).map((plan) => ({
+    ...plan,
+    icon: PLAN_ICONS[plan.name] ?? BarChart2,
+  }));
+
+  const isPending = sessionPending || plansLoading;
 
   // Set the default selected package once data is loaded
   useEffect(() => {
@@ -116,7 +62,7 @@ const PackageSelectionComponent = ({
       const firstAvailablePackage = packages.find((p) => p.available);
       setSelectedPackage(firstAvailablePackage);
     }
-  }, [isPending]);
+  }, [isPending, plans]);
 
   if (isPending) {
     return (
@@ -126,8 +72,6 @@ const PackageSelectionComponent = ({
       </div>
     );
   }
-
-  const plan = data?.user?.plan || "";
 
   return (
     <Flex className="flex-col mx-auto p-12">
@@ -221,8 +165,6 @@ const PackageSelectionComponent = ({
                         name: selectedPackage.name,
                         price: selectedPackage.price,
                         currency: selectedPackage.currency,
-                        plan: plan,
-                        priceId: selectedPackage.priceId,
                       })
                     }
                     disabled={!selectedPackage.available}
@@ -320,20 +262,20 @@ export const PostSignupFlowPage = () => {
     name: string;
     price: number;
     currency: string;
-    plan: string;
-    priceId: string;
   }) => {
     setIsLoading(true);
     setCurrentStep("payment");
 
     try {
+      // Send the package name; the backend resolves which Stripe Price that is
+      // for this merchant's order tier (billing.util.ts).
       const response = await axios.post("/payment/create-stripe", {
-        priceId: pkg.priceId,
+        package: pkg.name,
       });
 
       if (response.data.url) {
         const updatedUser = await authClient.updateUser({
-          plan: pkg.plan,
+          plan: String(pkg.price),
           package: pkg.name,
         });
 
