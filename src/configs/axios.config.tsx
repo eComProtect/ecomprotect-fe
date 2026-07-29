@@ -71,22 +71,28 @@ axios.interceptors.request.use(async (config) => {
 // and offers reconnecting as an action the merchant chooses to take.
 let reAuthRedirectInFlight = false;
 
-const promptShopifyReconnect = (reAuthUrl: string) => {
+const CONNECT_SHOPIFY_PATH = "/user/connect-shopify";
+
+const promptShopifyReconnect = () => {
+  // Already on the connect screen (or its modal is up over the dashboard) —
+  // the merchant is looking at the fix, so don't talk over it.
+  if (window.location.pathname === CONNECT_SHOPIFY_PATH) return;
+
   // Shared id: repeat 401s (several data hooks usually fail together) update
   // this one toast instead of stacking up.
   toast.error(
     (t) => (
       <span className="flex items-center gap-3">
-        Your Shopify connection has expired, so store data can't load.
+        This store isn't connected to Shopify, so store data can't load.
         <button
           type="button"
           className="shrink-0 rounded-md bg-blue-600 px-2 py-1 text-xs font-semibold text-white"
           onClick={() => {
             toast.dismiss(t.id);
-            window.open(reAuthUrl, "_top");
+            window.location.assign(CONNECT_SHOPIFY_PATH);
           }}
         >
-          Reconnect
+          Connect
         </button>
       </span>
     ),
@@ -110,7 +116,13 @@ axios.interceptors.response.use(
           window.open(data.reAuthUrl, "_top");
         }
       } else {
-        promptShopifyReconnect(data.reAuthUrl);
+        // Standalone website: SHOPIFY_TOKEN_EXPIRED is returned both for a
+        // genuinely expired token and for a store that was never connected at
+        // all, and reAuthUrl points at OAuth — which isn't the recovery for a
+        // store connected with its own custom-app credentials (and can't work
+        // at all before the public app is approved). Send them to the connect
+        // screen, which is the correct fix in both cases.
+        promptShopifyReconnect();
       }
     }
 
