@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { backendOrigin } from "@/configs/axios.config";
 
 const ShopifyLoadingState = ({ text }: { text: string }) => (
   <main className="flex min-h-screen items-center justify-center bg-white px-6">
@@ -21,8 +22,14 @@ export const ShopifyInstall = () => {
       return;
     }
 
-    const apiUrl = import.meta.env.VITE_API_URL;
-    const installUrl = `${apiUrl}/shopify/install?shop=${encodeURIComponent(shop)}`;
+    // Must be the backend's absolute origin. VITE_API_URL was read here but is
+    // not a variable this app defines (.env has VITE_BACKEND_URL), so this
+    // interpolated the string "undefined" and produced a *relative* URL —
+    // inside the Admin iframe that resolved to
+    // admin.shopify.com/store/<shop>/apps/<client_id>/undefined/shopify/install
+    // instead of the backend. backendOrigin is the same value axios uses, with
+    // its own localhost fallback.
+    const installUrl = `${backendOrigin}/shopify/install?shop=${encodeURIComponent(shop)}`;
 
     // Inside the Admin iframe, a same-frame redirect only navigates the
     // iframe, so the OAuth state cookie would be set in a blocked

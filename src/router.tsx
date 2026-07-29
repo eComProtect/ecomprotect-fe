@@ -37,6 +37,7 @@ import EnableNotificationsPage from "./pages/enablenotifications.page";
 import WaiverPage from "./pages/waiver.page";
 import PendingActionsPage from "./pages/pendingactions.page";
 import { PrivacyPolicyPage } from "./pages/privacypolicy.page";
+import ConnectShopify from "./pages/connectshopify.page";
 
 export const Router = () => {
   return (
@@ -173,6 +174,7 @@ export const Router = () => {
           <Route path="/user/order-management" element={<OrderManagement />} />
           <Route path="/user/pending-actions" element={<PendingActionsPage />} />
           <Route path="/user/create-staff" element={<CreateStaff />} />
+          <Route path="/user/connect-shopify" element={<ConnectShopify />} />
         </Route>
 
         {/* Top-level Catch-all 404 Route */}
