@@ -127,6 +127,13 @@ export const ConnectShopifyForm = ({
               scopes listed below.
             </li>
             <li>
+              Open the app's <b>Distribution</b> section, choose{" "}
+              <b>Custom distribution</b>, enter this store's{" "}
+              <b>.myshopify.com</b> domain and save. Shopify won't let the app be
+              installed until a distribution method is set — and this choice is
+              permanent for that app.
+            </li>
+            <li>
               <b>Install the app on your store.</b> Credentials from an
               uninstalled app are rejected.
             </li>
