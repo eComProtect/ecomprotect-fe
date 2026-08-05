@@ -37,11 +37,10 @@ const PackageSelectionComponent = ({
   const { isPending: sessionPending } = authClient.useSession();
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
 
-  // Pricing (including which Stripe Price each package maps to) is owned by the
-  // backend's BILLING_PLANS matrix and served by GET /api/billing/plans, already
-  // resolved for this merchant's order tier. It used to be duplicated here as a
-  // hardcoded price-per-tier ladder plus raw Stripe price IDs, which drifted from
-  // the Shopify billing prices and let the browser choose its own price.
+  // Pricing is owned by the backend's BILLING_PLANS matrix and served by
+  // GET /api/billing/plans, already resolved for this merchant's order tier.
+  // It used to be duplicated here as a hardcoded price-per-tier ladder, which
+  // drifted from the Shopify billing prices and let the browser choose its own price.
   const { data: plans, isLoading: plansLoading } = useQuery<ApiPlan[]>({
     queryKey: ["billing", "plans"],
     // Body is { message, data: BillingPlan[] } — the plan array is under `data`.
@@ -188,9 +187,9 @@ const PackageSelectionComponent = ({
 const PaymentComponent = () => (
   <div className="flex flex-col justify-center mx-auto items-center border-0 text-center space-y-6 p-10">
     <Loader2 className="h-16 w-16 text-blue-600 animate-spin" />
-    <h1 className="text-3xl font-bold">Redirecting to Payment Setup</h1>
+    <h1 className="text-3xl font-bold">Setting Up Your Account</h1>
     <p className="text-gray-600">
-      Please wait while we securely redirect you to GoCardless.
+      Please wait while we redirect you to install the app on your Shopify store.
     </p>
   </div>
 );
@@ -267,29 +266,23 @@ export const PostSignupFlowPage = () => {
     setCurrentStep("payment");
 
     try {
-      // Send the package name; the backend resolves which Stripe Price that is
-      // for this merchant's order tier (billing.util.ts).
-      const response = await axios.post("/payment/create-stripe", {
+      // Billing now happens exclusively through the Shopify Billing API once
+      // the merchant installs the app on their store — there is no off-Shopify
+      // payment path any more. Record the chosen package, then send them to
+      // install; the Shopify OAuth flow triggers the actual subscription charge.
+      const updatedUser = await authClient.updateUser({
+        plan: String(pkg.price),
         package: pkg.name,
       });
 
-      if (response.data.url) {
-        const updatedUser = await authClient.updateUser({
-          plan: String(pkg.price),
-          package: pkg.name,
+      if (updatedUser.data?.status === true) {
+        await authClient.sendVerificationEmail({
+          email: userEmail,
         });
-
-        if (updatedUser.data?.status === true) {
-          await authClient.sendVerificationEmail({
-            email: userEmail,
-          });
-        }
-        window.location.href = response.data.url;
-      } else {
-        throw new Error("Could not retrieve payment URL.");
       }
+      navigate("/install");
     } catch (error) {
-      console.error("Payment initiation failed:", error);
+      console.error("Package selection failed:", error);
       setIsLoading(false);
       setCurrentStep("packageSelection"); // Revert to selection on failure
     }
