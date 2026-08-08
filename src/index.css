@@ -1,3 +1,15 @@
+/* Explicit layer order, declared before anything else: "polaris" must sit
+   BELOW Tailwind's own layers (theme, base, components, utilities) so that
+   Tailwind's text-size utilities win over Polaris's admin-UI reset
+   (h1-h6,p { font-size: 1em } + a 13px body base) instead of being silently
+   overridden by it. Per the CSS cascade-layers spec, unlayered CSS always
+   beats layered CSS regardless of specificity — Polaris was previously
+   loaded via a plain <link> tag in index.html specifically to dodge the
+   Tailwind v4 pipeline, which made it unlayered and let it win over every
+   Tailwind text-* class on every page. */
+@layer polaris, theme, base, components, utilities;
+@import url("/polaris.css") layer(polaris);
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
