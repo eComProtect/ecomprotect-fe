@@ -45,6 +45,12 @@ interface BillingStatus {
   subscriptions: ActiveSubscription[];
 }
 
+interface OrderQuota {
+  count: number;
+  cap: number | null;
+  tier: string | null;
+}
+
 /**
  * Manage-subscription page for merchants who are already active (unlike
  * billing.page.tsx, which only runs once during initial onboarding). Lets a
@@ -78,6 +84,11 @@ const SubscriptionSettingsPage = () => {
   const currentSubscription = billingStatus?.subscriptions?.find(
     (s) => s.status === "ACTIVE"
   );
+
+  const { data: quota } = useQuery<OrderQuota>({
+    queryKey: ["billing", "quota"],
+    queryFn: async () => (await axios.get("/billing/quota")).data,
+  });
 
   const { data: plans, isLoading: plansLoading } = useQuery<MerchantPlan[]>({
     queryKey: ["billing", "plans", orders],
@@ -163,6 +174,40 @@ const SubscriptionSettingsPage = () => {
           >
             Cancel Subscription
           </Button>
+        </Box>
+      )}
+
+      {quota && (
+        <Box className="mb-8 rounded-xl border border-gray-200 bg-white p-6">
+          <Flex className="items-baseline justify-between">
+            <p className="text-sm font-medium text-gray-500">
+              Orders analyzed this month
+            </p>
+            <p className="text-sm font-semibold">
+              {quota.count}
+              {quota.cap !== null ? ` / ${quota.cap}` : " (unlimited)"}
+            </p>
+          </Flex>
+          {quota.cap !== null && (
+            <Box className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+              <Box
+                className={[
+                  "h-full rounded-full",
+                  quota.count >= quota.cap ? "bg-red-500" : "bg-blue-600",
+                ].join(" ")}
+                style={{
+                  width: `${Math.min(100, (quota.count / quota.cap) * 100)}%`,
+                }}
+              />
+            </Box>
+          )}
+          {quota.cap !== null && quota.count >= quota.cap && (
+            <p className="mt-2 text-xs text-red-600">
+              You've reached this month's limit — new orders won't be
+              screened for risk until next month, or upgrade to a higher
+              order-volume tier below for higher coverage right away.
+            </p>
+          )}
         </Box>
       )}
 
