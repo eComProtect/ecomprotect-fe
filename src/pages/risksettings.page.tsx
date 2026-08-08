@@ -82,6 +82,13 @@ function RiskSettings() {
 
   const { user } = useIdentity();
   const userPackage = user?.package;
+  // Mirrors PLAN_FEATURES in billing.util.ts — the backend is the real
+  // enforcement (setting.controller.ts clamps these on save, and
+  // order.webhook.ts/getcustomerforstore.controller.ts re-check at the
+  // point of use), this just keeps the UI honest about what'll actually work.
+  const hasLossRateFeature =
+    userPackage === "ECP Vision" || userPackage === "ECP Shield";
+  const hasWaiverFeature = userPackage === "ECP Shield";
 
   useEffect(() => {
     if (fetchedData) {
@@ -220,9 +227,7 @@ function RiskSettings() {
             <Label
               className={cn(
                 "font-medium",
-                !(userPackage === "ECP Vision" || userPackage === "ECP Insight")
-                  ? "text-gray-400"
-                  : "text-slate-700"
+                !hasLossRateFeature ? "text-gray-400" : "text-slate-700"
               )}
             >
               Loss Rate Threshold (%)
@@ -232,9 +237,7 @@ function RiskSettings() {
               value={lossRateInput}
               min={1}
               max={100}
-              disabled={
-                !(userPackage === "ECP Vision" || userPackage === "ECP Insight")
-              }
+              disabled={!hasLossRateFeature}
               className={`mt-2 bg-white border border-gray-200 `}
               onChange={(e) => {
                 setLossRateInput(e.target.value);
@@ -244,6 +247,11 @@ function RiskSettings() {
             />
             {lossRateError && (
               <p className="mt-1 text-sm text-red-600">{lossRateError}</p>
+            )}
+            {!hasLossRateFeature && (
+              <p className="mt-1 text-xs text-gray-400">
+                Available on ECP Vision and ECP Shield.
+              </p>
             )}
           </Box>
 
@@ -366,9 +374,19 @@ function RiskSettings() {
           </Box>
 
           <Box className="flex items-center justify-between">
-            <Label>Include waiver link</Label>
+            <Box>
+              <Label className={cn(!hasWaiverFeature && "text-gray-400")}>
+                Include waiver link
+              </Label>
+              {!hasWaiverFeature && (
+                <p className="text-xs text-gray-400">
+                  Available on ECP Shield.
+                </p>
+              )}
+            </Box>
             <Switch
-              checked={settings.includeWavierLink}
+              checked={hasWaiverFeature && settings.includeWavierLink}
+              disabled={!hasWaiverFeature}
               onCheckedChange={(val) => handleChange("includeWavierLink", val)}
             />
           </Box>
