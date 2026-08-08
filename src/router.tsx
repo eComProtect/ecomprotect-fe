@@ -35,6 +35,7 @@ import EnableNotificationsPage from "./pages/enablenotifications.page";
 import WaiverPage from "./pages/waiver.page";
 import PendingActionsPage from "./pages/pendingactions.page";
 import { PrivacyPolicyPage } from "./pages/privacypolicy.page";
+import SubscriptionSettingsPage from "./pages/subscriptionsettings.page";
 
 export const Router = () => {
   return (
@@ -169,6 +170,7 @@ export const Router = () => {
           <Route path="/user/order-management" element={<OrderManagement />} />
           <Route path="/user/pending-actions" element={<PendingActionsPage />} />
           <Route path="/user/create-staff" element={<CreateStaff />} />
+          <Route path="/user/subscription" element={<SubscriptionSettingsPage />} />
         </Route>
 
         {/* Top-level Catch-all 404 Route */}

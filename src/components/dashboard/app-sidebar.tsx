@@ -2,6 +2,7 @@ import {
   AlertCircle,
   ChevronDown,
   Clock,
+  CreditCard,
   Globe,
   LayoutGrid,
   Loader2,
@@ -42,7 +43,7 @@ import { authClient } from "../../providers/user.provider";
 import { isEmbedded } from "@/configs/appbridge.config";
 import { clearStaffToken } from "@/configs/staffsession";
 import { toast } from "react-hot-toast";
-import { FaUserPlus, FaStore } from "react-icons/fa6";
+import { FaUserPlus } from "react-icons/fa6";
 import whiteLogo from "/icons/logo_icon.png";
 import React, { useState, useRef } from "react";
 
@@ -138,7 +139,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
 
   const userSecondaryMenuItems: MenuItem[] = [
     { title: "Report", url: "/user/report", icon: Paperclip },
-    { title: "Connect Shopify", url: "/user/connect-shopify", icon: FaStore },
+    { title: "Manage Subscription", url: "/user/subscription", icon: CreditCard },
     { title: "Settings", url: "/user/settings", icon: Settings },
   ];
 
