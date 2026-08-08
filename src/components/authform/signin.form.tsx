@@ -124,15 +124,6 @@ export const SigninForm = () => {
         <Box className="w-full max-w-md space-y-4">
           <Box className="space-y-1">
             <h1 className="text-3xl font-bold">Sign In</h1>
-            <p className="text-gray-500 max-sm:text-xs">
-              Don't have an account?{" "}
-              <Link
-                to="/signup" // Link to the signup page
-                className="font-semibold text-blue-600 hover:underline"
-              >
-                Sign Up
-              </Link>
-            </p>
           </Box>
         </Box>
 

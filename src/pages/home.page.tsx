@@ -43,10 +43,17 @@ export const Home = () => {
 
           <Box className="mt-8 flex flex-wrap items-center gap-4">
             <Button className="rounded-full bg-[#30A46C] px-7 py-6 text-base font-semibold text-white hover:bg-[#298d5c]">
-              <Link to="/signup" className="flex items-center">
+              {/* TODO: point at the live Shopify App Store listing once approved —
+                  installation must be initiated from Shopify, not a form on this site. */}
+              <a
+                href="https://apps.shopify.com"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center"
+              >
                 Get Started
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
+              </a>
             </Button>
             <Button
               variant="outline"

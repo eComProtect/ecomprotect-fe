@@ -1,11 +1,9 @@
 import { Outlet, Route, Routes } from "react-router-dom";
-import { Signup } from "./pages/signup.page";
 import { Signin } from "./pages/signin.page";
 import { Settings } from "./pages/settings.page";
 import { NotFoundPage } from "./pages/notfound.page";
 import { AdminSignin } from "./pages/adminsignin.page";
 import { PlansPage } from "./pages/plan.page";
-import { PostSignupFlowPage } from "./pages/signinflow.page";
 import { UnderReviewComponent } from "./pages/underreview.page";
 import Dashboard from "./pages/dashboard.page";
 import Layout from "./layout/sidebar.layout";
@@ -48,11 +46,9 @@ export const Router = () => {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
 
-        <Route path="/signup" element={<Signup />} />
         {/* Root: embedded entry gate (Shopify Admin) or public marketing site */}
         <Route path="/" element={<EmbeddedEntry />} />
         <Route path="/select-plans" element={<PlansPage />} />
-        <Route path="/post-signup" element={<PostSignupFlowPage />} />
         <Route path="/under-review" element={<UnderReviewComponent />} />
         <Route path="/accept-invite" element={<AcceptInvitation />} />
         <Route path="/install" element={<ShopifyInstall />} />
