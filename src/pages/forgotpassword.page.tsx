@@ -62,7 +62,7 @@ export const ForgotPasswordForm = () => {
       <Box className="w-full max-w-md">
         {/* Logo */}
         <Flex className="mb-8 justify-center">
-          <img src={logo} alt="Canel Logo" className="h-12 w-auto" />
+          <img src={logo} alt="eComProtect Logo" className="h-12 w-auto" />
         </Flex>
 
         {/* Form Card */}
