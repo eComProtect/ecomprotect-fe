@@ -114,7 +114,9 @@ const SubscriptionSettingsPage = () => {
       });
       const confirmationUrl: string | undefined = res.data?.confirmationUrl;
       if (!confirmationUrl) throw new Error("No confirmation URL returned.");
-      window.open(confirmationUrl, "_top");
+      // See billing.page.tsx for why this uses top.location.href instead of
+      // window.open("_top") — popup blocker eats the latter after an await.
+      (window.top ?? window).location.href = confirmationUrl;
     } catch (e: any) {
       setError(
         e?.response?.data?.message || e?.message || "Failed to start checkout."

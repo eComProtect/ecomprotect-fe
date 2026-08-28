@@ -58,10 +58,11 @@ axios.interceptors.request.use(async (config) => {
 //
 // Recovering means re-running OAuth, and reAuthUrl (shopifyReAuthUrl →
 // /shopify/install) hands off to Shopify's authorize page. The app is
-// embedded-only (no standalone dashboard), so this always happens inside the
-// Admin iframe — window.open('_top') targets the topmost browsing context,
-// which is exactly where the merchant already is, matching EmbeddedEntry's
-// own needs_login recovery path.
+// embedded-only (no standalone dashboard), so this always happens inside
+// the Admin iframe. Assigning to top.location.href is a top-frame
+// navigation (not a popup) — safe to fire from an axios interceptor after
+// the response has resolved, where the user-gesture attribution is long
+// gone and window.open("_top") would be popup-blocked.
 let reAuthRedirectInFlight = false;
 
 axios.interceptors.response.use(
@@ -76,7 +77,7 @@ axios.interceptors.response.use(
       !reAuthRedirectInFlight
     ) {
       reAuthRedirectInFlight = true;
-      window.open(data.reAuthUrl, "_top");
+      (window.top ?? window).location.href = data.reAuthUrl;
     }
 
     return Promise.reject(error);

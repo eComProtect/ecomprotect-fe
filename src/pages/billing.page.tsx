@@ -85,11 +85,14 @@ const BillingPage = () => {
       if (!confirmationUrl) throw new Error("No confirmation URL returned.");
 
       // Break out of the Admin iframe to Shopify's billing confirmation
-      // screen. '_top' targets the topmost browsing context — works the same
-      // whether or not we're actually embedded. (v3 needed App Bridge's
-      // Redirect.Action.REMOTE for this; v4 has no equivalent API — Shopify's
-      // own migration guide replaces it with plain window.open.)
-      window.open(confirmationUrl, "_top");
+      // screen. `window.open(url, "_top")` fires AFTER an awaited network
+      // call — the microtask boundary detaches it from the click's user
+      // gesture, and Chrome's iframe popup blocker silently drops it, leaving
+      // the merchant stuck on "Redirecting…". Assigning to
+      // `window.top.location.href` is a top-frame navigation (not a popup),
+      // isn't gated on a user gesture, and is explicitly allowed cross-origin
+      // for the child-writes-parent case.
+      (window.top ?? window).location.href = confirmationUrl;
     } catch (e: any) {
       setError(
         e?.response?.data?.message || e?.message || "Failed to start checkout."
