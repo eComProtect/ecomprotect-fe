@@ -5,6 +5,7 @@ import { axios } from "../../configs/axios.config";
 export type UpdateStaffPayload = {
   id: string;
   name?: string;
+  email?: string;
   mobile_number?: string;
   role?: string;
   banned?: boolean;

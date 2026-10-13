@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock, Eye, EyeOff, Loader2, Library } from "lucide-react";
+import { Eye, EyeOff, Loader2, Library } from "lucide-react";
 import { authClient } from "@/providers/user.provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Stack } from "@/components/ui/stack";
@@ -60,6 +60,7 @@ export const Settings = () => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
+    email: "",
   });
 
   // State for password fields
@@ -106,6 +107,7 @@ export const Settings = () => {
       setFormData({
         firstName: firstName || "",
         lastName: lastNameParts.join(" ") || "",
+        email: user.email || "",
       });
     }
   }, [user]);
@@ -168,7 +170,25 @@ export const Settings = () => {
 
       await authClient.updateUser(updatePayload);
 
-      setSuccess("Your settings have been saved successfully!");
+      let emailChangeMessage = "";
+      if (user && formData.email.trim() !== user.email) {
+        const { error: emailError } = await authClient.changeEmail({
+          newEmail: formData.email.trim(),
+          callbackURL: `${window.location.origin}/admin/settings`,
+        });
+
+        if (emailError) {
+          throw new Error(emailError.message || "Failed to update email.");
+        }
+
+        emailChangeMessage = user.emailVerified
+          ? " Check your current inbox to confirm the new email address."
+          : " Check your new inbox to verify it.";
+      }
+
+      setSuccess(
+        `Your settings have been saved successfully!${emailChangeMessage}`
+      );
       setPasswordData({
         currentPassword: "",
         newPassword: "",
@@ -272,16 +292,19 @@ export const Settings = () => {
                   </Box>
                   <Box className="space-y-2">
                     <Label htmlFor="email">Email Address</Label>
-                    <Box className="relative">
-                      <Input
-                        id="email"
-                        type="email"
-                        value={user?.email || "Loading..."}
-                        disabled
-                        className="py-5 rounded-lg border-gray-200 bg-gray-100 pr-10"
-                      />
-                      <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    </Box>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter email address"
+                      value={formData.email}
+                      onChange={handleNameChange}
+                      disabled={!user}
+                      className="py-5 rounded-lg border-gray-200 bg-gray-50"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Changing your email requires confirming the change from
+                      your current inbox.
+                    </p>
                   </Box>
                 </Box>
               </div>

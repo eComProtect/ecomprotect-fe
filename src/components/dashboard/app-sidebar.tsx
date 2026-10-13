@@ -88,6 +88,11 @@ export function AppSidebar({ role }: AppSidebarProps) {
       icon: PackagePlus,
     },
     {
+      title: "Create Staff",
+      url: "/admin/create-staff",
+      icon: FaUserPlus,
+    },
+    {
       title: "Reports",
       url: "/admin/report-analysis",
       icon: AlertCircle,

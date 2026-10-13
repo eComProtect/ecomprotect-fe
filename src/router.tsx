@@ -15,6 +15,7 @@ import NotificationsPage from "./pages/notification.page";
 import OrderManagement from "./pages/ordermanagement.page";
 import RiskSettings from "./pages/risksettings.page";
 import CreateStaff from "./pages/staff.page";
+import CreatePlatformAdmin from "./pages/adminteam.page";
 import VerifyEmailPage from "./pages/acceptinvitation.page";
 import { ForgotPasswordForm } from "./pages/forgotpassword.page";
 import ResetPasswordPage from "./pages/reset.page";
@@ -149,6 +150,14 @@ export const Router = () => {
             element={
               <AdminProtectedRoute>
                 <CreateStore />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/create-staff"
+            element={
+              <AdminProtectedRoute>
+                <CreatePlatformAdmin />
               </AdminProtectedRoute>
             }
           />
