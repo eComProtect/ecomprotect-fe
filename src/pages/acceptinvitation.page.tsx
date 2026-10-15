@@ -22,16 +22,20 @@ const AcceptInvitation: React.FC = () => {
     }
 
     const verifyToken = async () => {
-      try {
-        // This is the built-in better-auth function to verify the token
-        await authClient.emailOtp.verifyEmail({ email, otp });
-        setStatus("success");
-      } catch (error: any) {
+      // better-auth's client resolves { data, error } instead of throwing by
+      // default — a try/catch here would never see a failed verification
+      // (expired/invalid OTP) and would always report "success".
+      const { error } = await authClient.emailOtp.verifyEmail({ email, otp });
+
+      if (error) {
         setStatus("error");
         setErrorMessage(
           error.message || "Verification failed. The link may have expired."
         );
+        return;
       }
+
+      setStatus("success");
     };
 
     verifyToken();

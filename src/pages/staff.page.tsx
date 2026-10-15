@@ -156,6 +156,22 @@ function EditStaffDialog({
 function StaffList() {
   const { data: staff, isLoading, error } = useFetchStaff();
   const [editing, setEditing] = useState<StaffMember | null>(null);
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
+  const handleResendInvite = async (member: StaffMember) => {
+    setResendingId(member.id);
+    const { error } = await authClient.emailOtp.sendVerificationOtp({
+      email: member.email,
+      type: "email-verification",
+    });
+
+    if (error) {
+      toast.error(error.message || "Failed to resend verification email.");
+    } else {
+      toast.success(`Verification email resent to ${member.email}`);
+    }
+    setResendingId(null);
+  };
 
   return (
     <Box className="rounded-xl bg-white shadow-sm border border-slate-200 overflow-hidden mt-6">
@@ -212,6 +228,10 @@ function StaffList() {
                   <td className="px-4 py-3">
                     {member.banned ? (
                       <Badge variant="destructive">Inactive</Badge>
+                    ) : !member.emailVerified ? (
+                      <Badge className="bg-amber-100 text-amber-700 border-transparent">
+                        Unverified
+                      </Badge>
                     ) : (
                       <Badge className="bg-green-100 text-green-700 border-transparent">
                         Active
@@ -219,13 +239,30 @@ function StaffList() {
                     )}
                   </td>
                   <td className="px-8 py-3 text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditing(member)}
-                    >
-                      <Pencil className="mr-2 h-3.5 w-3.5" /> Edit
-                    </Button>
+                    <Box className="flex justify-end gap-2">
+                      {!member.emailVerified && !member.banned && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={resendingId === member.id}
+                          onClick={() => handleResendInvite(member)}
+                        >
+                          <RefreshCw
+                            className={`mr-2 h-3.5 w-3.5 ${
+                              resendingId === member.id ? "animate-spin" : ""
+                            }`}
+                          />
+                          Resend Invite
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditing(member)}
+                      >
+                        <Pencil className="mr-2 h-3.5 w-3.5" /> Edit
+                      </Button>
+                    </Box>
                   </td>
                 </tr>
               ))}
@@ -320,10 +357,22 @@ export default function CreateStaff() {
         {
           onSuccess: async () => {
             toast.success("Staff member created successfully");
-            await authClient.emailOtp.sendVerificationOtp({
+            // better-auth's client resolves { data, error } instead of
+            // throwing by default — this call never actually threw on
+            // failure, so a failed send went completely unnoticed before.
+            const { error } = await authClient.emailOtp.sendVerificationOtp({
               email: form.email,
               type: "email-verification",
             });
+
+            if (error) {
+              toast.error(
+                error.message ||
+                  "Staff created, but the verification email failed to send. Use \"Resend Invite\" from the list below."
+              );
+            } else {
+              toast.success("Verification email sent");
+            }
             setForm({ name: "", email: "", password: "", phone: "", role: "support" });
             queryClient.invalidateQueries({ queryKey: ["staff-list"] });
             setLoading(false);
