@@ -3,6 +3,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Box } from "@/components/ui/box";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -29,6 +36,14 @@ import {
 import { useFetchStaff, type StaffMember } from "@/hooks/staff/usefetchstaff";
 import { useUpdateStaff } from "@/hooks/staff/useupdatestaff";
 
+const PLATFORM_ADMIN_ROLES = ["admin", "it_support", "project_manager"] as const;
+
+const PLATFORM_ROLE_LABELS: Record<string, string> = {
+  admin: "Platform Admin",
+  it_support: "IT Support",
+  project_manager: "Project Manager",
+};
+
 function EditAdminDialog({
   admin,
   onClose,
@@ -40,6 +55,7 @@ function EditAdminDialog({
     name: admin.name,
     email: admin.email,
     mobile_number: admin.mobile_number ?? "",
+    role: admin.role,
     banned: Boolean(admin.banned),
   });
   const [newPassword, setNewPassword] = useState("");
@@ -152,6 +168,27 @@ function EditAdminDialog({
           </div>
 
           <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-slate-700">
+              Assigned Role
+            </label>
+            <Select
+              value={form.role}
+              onValueChange={(value) => setForm({ ...form, role: value })}
+            >
+              <SelectTrigger className="h-11 border-slate-200 bg-slate-50/50 rounded-lg shadow-none">
+                <SelectValue placeholder="Select admin role" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-slate-200 shadow-xl rounded-lg">
+                {PLATFORM_ADMIN_ROLES.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {PLATFORM_ROLE_LABELS[role]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
             <label className="text-sm font-semibold text-slate-700 flex items-center justify-between">
               New Password
               <button
@@ -252,6 +289,7 @@ function AdminTeamList() {
                 <th className="text-left font-semibold px-8 py-3">Name</th>
                 <th className="text-left font-semibold px-4 py-3">Email</th>
                 <th className="text-left font-semibold px-4 py-3">Phone</th>
+                <th className="text-left font-semibold px-4 py-3">Role</th>
                 <th className="text-left font-semibold px-4 py-3">Status</th>
                 <th className="text-right font-semibold px-8 py-3">Actions</th>
               </tr>
@@ -265,6 +303,11 @@ function AdminTeamList() {
                   <td className="px-4 py-3 text-slate-600">{member.email}</td>
                   <td className="px-4 py-3 text-slate-600">
                     {member.mobile_number || "N/A"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant="secondary">
+                      {PLATFORM_ROLE_LABELS[member.role] ?? member.role}
+                    </Badge>
                   </td>
                   <td className="px-4 py-3">
                     {member.banned ? (
@@ -304,6 +347,7 @@ export default function CreatePlatformAdmin() {
     email: "",
     password: "",
     phone: "",
+    role: "admin" as string,
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -330,7 +374,7 @@ export default function CreatePlatformAdmin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password) {
+    if (!form.name || !form.email || !form.password || !form.role) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -343,7 +387,7 @@ export default function CreatePlatformAdmin() {
           email: form.email,
           password: form.password,
           data: {
-            role: "admin",
+            role: form.role,
             mobile_number: form.phone,
             // Platform admins aren't scoped to a store, but /api/staff keys its
             // roster lookup off storeOwnerId, so this points admin-team rows
@@ -359,7 +403,7 @@ export default function CreatePlatformAdmin() {
               email: form.email,
               type: "email-verification",
             });
-            setForm({ name: "", email: "", password: "", phone: "" });
+            setForm({ name: "", email: "", password: "", phone: "", role: "admin" });
             queryClient.invalidateQueries({ queryKey: ["staff-list"] });
             setLoading(false);
           },
@@ -491,9 +535,21 @@ export default function CreatePlatformAdmin() {
                   <label className="text-sm font-semibold text-slate-700">
                     Assigned Role
                   </label>
-                  <Box className="h-11 flex items-center px-3 border border-slate-200 bg-slate-50/50 rounded-lg">
-                    <Badge variant="secondary">Platform Admin</Badge>
-                  </Box>
+                  <Select
+                    value={form.role}
+                    onValueChange={(value) => setForm({ ...form, role: value })}
+                  >
+                    <SelectTrigger className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-blue-500 rounded-lg transition-all shadow-none">
+                      <SelectValue placeholder="Select admin role" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-slate-200 shadow-xl rounded-lg">
+                      {PLATFORM_ADMIN_ROLES.map((role) => (
+                        <SelectItem key={role} value={role} className="cursor-pointer">
+                          {PLATFORM_ROLE_LABELS[role]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
