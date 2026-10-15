@@ -4,6 +4,17 @@ import { authClient } from "@/providers/user.provider";
 import { type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 
+// Every role that signs in through /admin-signin and should land in the
+// /admin/* dashboard area — platform staff (Platform Admin, IT Support,
+// Project Manager) alongside superadmin. Keep in sync with
+// shopify-be/src/utils/staffroles.util.ts PLATFORM_STAFF_ROLES.
+const PLATFORM_DASHBOARD_ROLES = [
+  "superadmin",
+  "admin",
+  "it_support",
+  "project_manager",
+];
+
 type StaffProtectedRouteProps = {
   children: ReactNode;
 };
@@ -23,7 +34,9 @@ export const AdminProtectedRoute = ({ children }: StaffProtectedRouteProps) => {
     );
   }
 
-  if ((session?.user as { role?: string } | undefined)?.role !== "superadmin") {
+  const role = (session?.user as { role?: string } | undefined)?.role;
+
+  if (!role || !PLATFORM_DASHBOARD_ROLES.includes(role)) {
     return <Navigate to="/admin-signin" replace />;
   }
 
