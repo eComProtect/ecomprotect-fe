@@ -36,7 +36,10 @@ import {
 import { useFetchStaff, type StaffMember } from "@/hooks/staff/usefetchstaff";
 import { useUpdateStaff } from "@/hooks/staff/useupdatestaff";
 
-const PLATFORM_ADMIN_ROLES = ["admin", "it_support", "project_manager"] as const;
+// "admin" (Platform Admin) is no longer offered when creating/editing —
+// superadmins are provisioned another way — but existing admin accounts
+// still exist and must keep displaying/working correctly.
+const SELECTABLE_PLATFORM_ROLES = ["it_support", "project_manager"] as const;
 
 const PLATFORM_ROLE_LABELS: Record<string, string> = {
   admin: "Platform Admin",
@@ -179,7 +182,12 @@ function EditAdminDialog({
                 <SelectValue placeholder="Select admin role" />
               </SelectTrigger>
               <SelectContent className="bg-white border-slate-200 shadow-xl rounded-lg">
-                {PLATFORM_ADMIN_ROLES.map((role) => (
+                {admin.role === "admin" && (
+                  <SelectItem value="admin">
+                    {PLATFORM_ROLE_LABELS.admin}
+                  </SelectItem>
+                )}
+                {SELECTABLE_PLATFORM_ROLES.map((role) => (
                   <SelectItem key={role} value={role}>
                     {PLATFORM_ROLE_LABELS[role]}
                   </SelectItem>
@@ -347,7 +355,7 @@ export default function CreatePlatformAdmin() {
     email: "",
     password: "",
     phone: "",
-    role: "admin" as string,
+    role: SELECTABLE_PLATFORM_ROLES[0] as string,
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -403,7 +411,13 @@ export default function CreatePlatformAdmin() {
               email: form.email,
               type: "email-verification",
             });
-            setForm({ name: "", email: "", password: "", phone: "", role: "admin" });
+            setForm({
+              name: "",
+              email: "",
+              password: "",
+              phone: "",
+              role: SELECTABLE_PLATFORM_ROLES[0],
+            });
             queryClient.invalidateQueries({ queryKey: ["staff-list"] });
             setLoading(false);
           },
@@ -543,7 +557,7 @@ export default function CreatePlatformAdmin() {
                       <SelectValue placeholder="Select admin role" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border-slate-200 shadow-xl rounded-lg">
-                      {PLATFORM_ADMIN_ROLES.map((role) => (
+                      {SELECTABLE_PLATFORM_ROLES.map((role) => (
                         <SelectItem key={role} value={role} className="cursor-pointer">
                           {PLATFORM_ROLE_LABELS[role]}
                         </SelectItem>
