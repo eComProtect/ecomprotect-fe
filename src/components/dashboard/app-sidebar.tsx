@@ -59,9 +59,16 @@ interface AppSidebarProps {
   role: "admin" | "user";
 }
 
+// Platform roles that can't create/manage other platform admins — the
+// backend rejects the attempt (see PLATFORM_STAFF_ROLES in
+// shopify-be/src/utils/staffroles.util.ts), so there's no point showing
+// them the link.
+const STAFF_MANAGEMENT_RESTRICTED_ROLES = ["it_support", "project_manager"];
+
 export function AppSidebar({ role }: AppSidebarProps) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
 
   const [isLoading, setIsLoading] = useState(false);
   // State for expanded sidebar accordion
@@ -70,6 +77,11 @@ export function AppSidebar({ role }: AppSidebarProps) {
   // Only merchants (not superadmins) have pending risk actions of their own.
   const { data: pendingActions } = useFetchPendingActions(false, role === "user");
   const pendingActionsCount = pendingActions?.length ?? 0;
+
+  const userRole = (session?.user as { role?: string } | undefined)?.role;
+  const canManageStaff = !STAFF_MANAGEMENT_RESTRICTED_ROLES.includes(
+    userRole ?? ""
+  );
 
   const adminMainMenuItems: MenuItem[] = [
     { title: "Dashboard", url: "/admin/dashboard", icon: LayoutGrid },
@@ -87,11 +99,15 @@ export function AppSidebar({ role }: AppSidebarProps) {
       url: "/admin/create-store",
       icon: PackagePlus,
     },
-    {
-      title: "Create Staff",
-      url: "/admin/create-staff",
-      icon: FaUserPlus,
-    },
+    ...(canManageStaff
+      ? [
+          {
+            title: "Create Staff",
+            url: "/admin/create-staff",
+            icon: FaUserPlus,
+          },
+        ]
+      : []),
     {
       title: "Reports",
       url: "/admin/report-analysis",
