@@ -230,7 +230,7 @@ function StaffList() {
                       <Badge variant="destructive">Inactive</Badge>
                     ) : !member.emailVerified ? (
                       <Badge className="bg-amber-100 text-amber-700 border-transparent">
-                        Unverified
+                        Pending
                       </Badge>
                     ) : (
                       <Badge className="bg-green-100 text-green-700 border-transparent">
