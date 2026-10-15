@@ -19,6 +19,7 @@ import CreatePlatformAdmin from "./pages/adminteam.page";
 import VerifyEmailPage from "./pages/acceptinvitation.page";
 import { ForgotPasswordForm } from "./pages/forgotpassword.page";
 import ResetPasswordPage from "./pages/reset.page";
+import { CheckEmailPage } from "./pages/checkemail.page";
 import AcceptInvitation from "./pages/acceptinvitation.page";
 import CreateStore from "./pages/createstores.page";
 import UserReport from "./pages/userreport.page";
@@ -45,6 +46,7 @@ export const Router = () => {
         <Route path="/signin" element={<Signin />} />
         <Route path="/admin-signin" element={<AdminSignin />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+        <Route path="/check-email" element={<CheckEmailPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
 
